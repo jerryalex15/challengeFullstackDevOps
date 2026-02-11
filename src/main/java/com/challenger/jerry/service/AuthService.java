@@ -4,23 +4,14 @@ import com.challenger.jerry.DTO.LoginResponse;
 import com.challenger.jerry.DTO.RegisterRequest;
 import com.challenger.jerry.DTO.RegisterResponse;
 import com.challenger.jerry.entity.UserInfo;
-import com.challenger.jerry.mapper.UserMapper;
 import com.challenger.jerry.repository.UserInfoRepository;
-import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 @Service
 public class AuthService {

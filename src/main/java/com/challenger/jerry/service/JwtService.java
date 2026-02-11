@@ -8,6 +8,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -35,15 +36,15 @@ public class JwtService {
 
     // Token Time To Live
     @Value("${JWT_ACCESS_EXPIRATION}")
-    private long jwtExpiration;
+    public long jwtExpiration;
 
     // Time to expire
     @Value("${JWT_REFRESH_EXPIRATION}")
-    private long jwtRefresh_expiration;
+    public long jwtRefresh_expiration;
 
     private final RefreshTokenRepository refreshTokenRepository;
     @Autowired
-    public JwtService(RefreshTokenRepository refreshTokenRepository, UserInfoRepository userInfoRepository) {
+    public JwtService(RefreshTokenRepository refreshTokenRepository) {
         this.refreshTokenRepository = refreshTokenRepository;
     }
 
@@ -124,12 +125,17 @@ public class JwtService {
     }
 
     public String generateRefreshToken(UserInfo userInfo) {
+        // supprimer ancien token s'il existe
+        refreshTokenRepository.findByUserInfo(userInfo)
+                .ifPresent(refreshTokenRepository::delete);
+
         String refreshToken = UUID.randomUUID().toString();
 
         RefreshToken tokenEntity = new RefreshToken();
         tokenEntity.setToken(refreshToken);
         tokenEntity.setUserInfo(userInfo);
         tokenEntity.setExpiryDate(LocalDateTime.now().plusSeconds(jwtRefresh_expiration / 1000)); // ex : TTL 7
+
         refreshTokenRepository.save(tokenEntity);
 
         return refreshToken;

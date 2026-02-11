@@ -1,4 +1,4 @@
-package com.challenger.jerry.service;
+package com.challenger.jerry.adapter;
 
 import com.challenger.jerry.entity.UserInfo;
 import org.jspecify.annotations.NonNull;
@@ -11,7 +11,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
 
 public class UserInfoDetails implements UserDetails {
 
