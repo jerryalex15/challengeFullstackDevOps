@@ -1,5 +1,6 @@
 package com.challenger.jerry.service;
 
+import com.challenger.jerry.DTO.LoginRequest;
 import com.challenger.jerry.DTO.LoginResponse;
 import com.challenger.jerry.DTO.RegisterRequest;
 import com.challenger.jerry.DTO.RegisterResponse;
@@ -57,15 +58,15 @@ public class AuthService {
                 .build();
     }
 
-    public LoginResponse login(String email, String password) {
-        UserInfo user = userInfoRepository.findByEmail(email)
+    public LoginResponse login(LoginRequest loginRequest) {
+        UserInfo user = userInfoRepository.findByEmail(loginRequest.getEmail())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
-        if (!passwordEncoder.matches(password, user.getPassword())) {
+        if (!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
             throw new BadCredentialsException("Invalid password");
         }
 
-        String accessToken = jwtService.generateToken(email);
+        String accessToken = jwtService.generateToken(loginRequest.getEmail());
         String refreshToken = jwtService.generateRefreshToken(user);
 
         return new LoginResponse(accessToken, refreshToken);

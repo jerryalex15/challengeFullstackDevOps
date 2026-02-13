@@ -1,8 +1,6 @@
 package com.challenger.jerry.adapter;
 
 import com.challenger.jerry.entity.UserInfo;
-import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -27,18 +25,16 @@ public class UserInfoDetails implements UserDetails {
     }
 
     @Override
-    @NonNull
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return this.authorities != null ? this.authorities : List.of();
     }
 
     @Override
-    public @Nullable String getPassword() {
+    public String getPassword() {
         return password;
     }
 
     @Override
-    @NonNull
     public String getUsername() {
         return this.username;
     }

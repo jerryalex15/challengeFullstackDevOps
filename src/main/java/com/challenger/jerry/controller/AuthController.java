@@ -10,7 +10,6 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 import com.challenger.jerry.repository.RefreshTokenRepository;
 import com.challenger.jerry.service.AuthService;
@@ -47,7 +46,7 @@ public class AuthController {
                     new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword())
             );
             // Si pas d'exception, login OK
-            return ResponseEntity.ok(authService.login(loginRequest.getEmail(), loginRequest.getPassword()));
+            return ResponseEntity.ok(authService.login(loginRequest));
         } catch (BadCredentialsException ex) {
             // Mauvais mot de passe ou email
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();

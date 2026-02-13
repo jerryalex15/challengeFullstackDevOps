@@ -1,32 +1,49 @@
 package com.challenger.jerry.controller;
 
+import com.challenger.jerry.DTO.LoginRequest;
 import com.challenger.jerry.DTO.LoginResponse;
+import com.challenger.jerry.DTO.RegisterRequest;
+import com.challenger.jerry.DTO.RegisterResponse;
 import com.challenger.jerry.base.BaseIntegrationTest;
+import com.challenger.jerry.config.TestSecurityConfig;
+import com.challenger.jerry.entity.RefreshToken;
 import com.challenger.jerry.entity.UserInfo;
+import com.challenger.jerry.repository.RefreshTokenRepository;
 import com.challenger.jerry.repository.UserInfoRepository;
 import com.challenger.jerry.service.AuthService;
 import com.challenger.jerry.service.JwtService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
+
+import java.time.LocalDateTime;
+import java.util.Optional;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@Testcontainers
 @SpringBootTest
 @AutoConfigureMockMvc(addFilters = false)
+@ActiveProfiles("test")
+@Import(TestSecurityConfig.class)
 public class AuthControllerIntegrationTest extends BaseIntegrationTest {
 
     @Autowired
@@ -36,31 +53,37 @@ public class AuthControllerIntegrationTest extends BaseIntegrationTest {
     private UserInfoRepository userInfoRepository;
 
     @Autowired
+    private RefreshTokenRepository refreshTokenRepository;
+
+    @Autowired
     private PasswordEncoder encoder;
 
-    @MockitoBean
-    private AuthService authService; // Mock de ton service
+    @Autowired
+    private AuthenticationManager authenticationManager;
 
-    @MockitoBean
-    private JwtService jwtService; // Mock du JwtService
+    @Autowired
+    private JwtService jwtService;
+
+    @Autowired
+    private AuthService authService;
+
+    private UserInfo user;
 
     @BeforeEach
     void setup() {
-        // Clean database to avoid unique constraint problem
+        refreshTokenRepository.deleteAll(); // before users to avoid foreign key constraints violations
         userInfoRepository.deleteAll();
-        UserInfo userInfo = new UserInfo();
-        userInfo.setEmail("test@gmail.com");
-        userInfo.setFullName("Test user");
-        userInfo.setRoles("ROLE_USER");
-        userInfo.setPassword(encoder.encode("password"));
-        userInfoRepository.save(userInfo);
+
+        user = new UserInfo();
+        user.setEmail("test@gmail.com");
+        user.setFullName("Test User");
+        user.setRoles("ROLE_USER");
+        user.setPassword(encoder.encode("password"));
+        userInfoRepository.save(user);
     }
 
     @Test
     void shouldLoginSuccessfully() throws Exception {
-        // Configure mocked service configuration
-        Mockito.when(authService.login("test@gmail.com", "password"))
-                .thenReturn(new LoginResponse("fakeAccessToken", "fakeRefreshToken"));
 
         String body = """
                     {
@@ -68,6 +91,7 @@ public class AuthControllerIntegrationTest extends BaseIntegrationTest {
                         "password": "password"
                     }
                 """;
+
         mockMvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.accessToken").exists())
@@ -76,10 +100,6 @@ public class AuthControllerIntegrationTest extends BaseIntegrationTest {
 
     @Test
     void shouldFailLoginWithWrongPassword() throws Exception {
-        // Configure mocked service configuration
-        Mockito.when(authService.login("test@gmail.com", "wrong"))
-                .thenThrow(new BadCredentialsException("Bad credentials"));
-
         String body = """
                     {
                           "email": "test@gmail.com",
@@ -92,7 +112,6 @@ public class AuthControllerIntegrationTest extends BaseIntegrationTest {
 
     @Test
     void shouldRegisterSuccessfully() throws Exception {
-
         String body = """
                 {
                     "email": "new@gmail.com",
@@ -101,7 +120,10 @@ public class AuthControllerIntegrationTest extends BaseIntegrationTest {
                 }
                 """;
         mockMvc.perform(post("/api/auth/register").contentType(MediaType.APPLICATION_JSON).content(body))
-                .andExpect(status().isCreated());
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.email").value("new@gmail.com"))
+                .andExpect(jsonPath("$.fullName").value("New User"))
+                .andExpect(jsonPath("$.roles").value("ROLE_USER"));
     }
 
     @Test
@@ -113,6 +135,27 @@ public class AuthControllerIntegrationTest extends BaseIntegrationTest {
                 }
                 """;
         mockMvc.perform(post("/api/auth/refresh_token").contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void shouldReturn401WhenRefreshTokenExpired() throws Exception {
+        // Créer un refresh token expiré
+        RefreshToken refreshToken = new RefreshToken();
+        refreshToken.setToken("expired-token");
+        refreshToken.setUserInfo(user);
+        refreshToken.setExpiryDate(LocalDateTime.now().minusMinutes(5));
+        refreshTokenRepository.save(refreshToken);
+
+        String body = """
+                {
+                    "refreshToken": "expired-token"
+                }
+                """;
+
+        mockMvc.perform(post("/api/auth/refresh_token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
                 .andExpect(status().isUnauthorized());
     }
 }
