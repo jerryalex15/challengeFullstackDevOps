@@ -1,10 +1,6 @@
 package com.challenger.jerry.controller;
 
-import com.challenger.jerry.DTO.LoginRequest;
-import com.challenger.jerry.DTO.LoginResponse;
-import com.challenger.jerry.DTO.RegisterRequest;
-import com.challenger.jerry.DTO.RegisterResponse;
-import com.challenger.jerry.base.BaseIntegrationTest;
+import com.challenger.jerry.DatabaseContainer.DatabaseInstanceTest;
 import com.challenger.jerry.config.TestSecurityConfig;
 import com.challenger.jerry.entity.RefreshToken;
 import com.challenger.jerry.entity.UserInfo;
@@ -12,29 +8,20 @@ import com.challenger.jerry.repository.RefreshTokenRepository;
 import com.challenger.jerry.repository.UserInfoRepository;
 import com.challenger.jerry.service.AuthService;
 import com.challenger.jerry.service.JwtService;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
-
 import java.time.LocalDateTime;
-import java.util.Optional;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -44,7 +31,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc(addFilters = false)
 @ActiveProfiles("test")
 @Import(TestSecurityConfig.class)
-public class AuthControllerIntegrationTest extends BaseIntegrationTest {
+public class AuthControllerIntegrationTest extends DatabaseInstanceTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -80,6 +67,12 @@ public class AuthControllerIntegrationTest extends BaseIntegrationTest {
         user.setRoles("ROLE_USER");
         user.setPassword(encoder.encode("password"));
         userInfoRepository.save(user);
+    }
+
+    @AfterEach
+    void cleanup(){
+        refreshTokenRepository.deleteAll(); // before users to avoid foreign key constraints violations
+        userInfoRepository.deleteAll();
     }
 
     @Test
