@@ -1,7 +1,6 @@
 package com.challenger.jerry.controller;
 
 import com.challenger.jerry.DatabaseContainer.DatabaseInstanceTest;
-import com.challenger.jerry.config.TestSecurityConfig;
 import com.challenger.jerry.entity.RefreshToken;
 import com.challenger.jerry.entity.UserInfo;
 import com.challenger.jerry.repository.RefreshTokenRepository;
@@ -14,11 +13,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
@@ -29,8 +26,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc(addFilters = false)
-@ActiveProfiles("test")
-@Import(TestSecurityConfig.class)
+//@ActiveProfiles("test")
+//@Import(TestSecurityConfig.class)
 public class AuthControllerIntegrationTest extends DatabaseInstanceTest {
 
     @Autowired
