@@ -1,6 +1,6 @@
 package com.challenger.jerry.controller;
 
-import com.challenger.jerry.DTO.*;
+import com.challenger.jerry.dto.*;
 import com.challenger.jerry.DatabaseContainer.DatabaseInstanceTest;
 import com.challenger.jerry.entity.RefreshToken;
 import com.challenger.jerry.entity.UserInfo;
@@ -17,7 +17,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import java.time.LocalDateTime;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-public class AuthControllerE2ETest extends DatabaseInstanceTest {
+class AuthControllerE2ETest extends DatabaseInstanceTest {
 
     @Autowired
     private TestRestTemplate restTemplate;
@@ -97,14 +97,14 @@ public class AuthControllerE2ETest extends DatabaseInstanceTest {
 
         // WHEN
         ResponseEntity<LoginResponse> response =
-                restTemplate.postForEntity("/api/auth/login", loginRequest, LoginResponse.class);
+                restTemplate.postForEntity("/api/auth/login", loginRequestHttpEntity, LoginResponse.class);
 
         // THEN
         Assertions.assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
     }
 
     @Test
-    void refreshTokenSuccessE2E() throws Exception {
+    void refreshTokenSuccessE2E() {
         // GIVEN
         RefreshToken refreshToken = new RefreshToken();
         refreshToken.setToken("valid-token");

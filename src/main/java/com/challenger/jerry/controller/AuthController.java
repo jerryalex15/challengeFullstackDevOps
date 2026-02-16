@@ -1,6 +1,6 @@
 package com.challenger.jerry.controller;
 
-import com.challenger.jerry.DTO.*;
+import com.challenger.jerry.dto.*;
 import com.challenger.jerry.entity.UserInfo;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,7 +9,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import com.challenger.jerry.repository.RefreshTokenRepository;
 import com.challenger.jerry.service.AuthService;
@@ -40,9 +39,9 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest loginRequest) throws Exception {
+    public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest loginRequest) {
         try {
-            Authentication authentication = authenticationManager.authenticate(
+            authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword())
             );
             // Si pas d'exception, login OK
@@ -61,12 +60,7 @@ public class AuthController {
                 .filter(rt -> rt.getExpiryDate().isAfter(LocalDateTime.now()))
                 .map(rt -> {
                     UserInfo userInfo = rt.getUserInfo();
-                    String newAccessToken = null;
-                    try {
-                        newAccessToken = jwtService.generateToken(userInfo.getEmail());
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
+                    String newAccessToken = jwtService.generateToken(userInfo.getEmail());
                     return ResponseEntity.ok().body(new RefreshTokenResponse(newAccessToken));
                 })
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());

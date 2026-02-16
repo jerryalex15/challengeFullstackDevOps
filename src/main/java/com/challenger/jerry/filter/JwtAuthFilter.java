@@ -1,6 +1,7 @@
 package com.challenger.jerry.filter;
 
 import com.challenger.jerry.service.JwtService;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -42,8 +43,10 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         jwt = authHeader.substring(7); // retire "Bearer "
         try {
             username = jwtService.extractUsername(jwt);
-        } catch (Exception e) {
-            throw new RuntimeException("Invalid JWT token", e);
+        } catch (JwtException | IllegalArgumentException e) {
+            logger.warn("Invalid JWT token: {}", e);
+            filterChain.doFilter(request, response);
+            return;
         }
 
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {

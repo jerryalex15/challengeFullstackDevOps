@@ -1,6 +1,6 @@
 package com.challenger.jerry.mapper;
 
-import com.challenger.jerry.DTO.RegisterRequest;
+import com.challenger.jerry.dto.RegisterRequest;
 import com.challenger.jerry.entity.UserInfo;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

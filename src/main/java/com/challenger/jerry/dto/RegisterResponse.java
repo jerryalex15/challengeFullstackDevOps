@@ -1,4 +1,4 @@
-package com.challenger.jerry.DTO;
+package com.challenger.jerry.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

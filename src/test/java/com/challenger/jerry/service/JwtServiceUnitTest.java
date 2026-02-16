@@ -31,11 +31,11 @@ class JwtServiceUnitTest {
     void setup() {
         // Injecter manuellement tes valeurs TTL
         jwtService.jwtExpiration = 1000 * 60 * 60;        // 1h
-        jwtService.jwtRefresh_expiration = 1000 * 60 * 60 * 24; // 1j
+        jwtService.jwtRefreshExpiration = 1000 * 60 * 60 * 24; // 1j
     }
 
     @Test
-    void testGenerateTokenAndValidate() throws Exception {
+    void testGenerateTokenAndValidate() {
         UserInfo testUser = new UserInfo();
         testUser.setEmail("test@gmail.com");
 
