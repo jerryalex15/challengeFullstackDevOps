@@ -15,7 +15,7 @@ pipeline {
                     branch: 'develop'
             }
         }
-
+        // Maven
         stage('Build') {
             steps {
                 sh 'mvn clean verify'
