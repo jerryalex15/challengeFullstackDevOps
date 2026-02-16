@@ -10,9 +10,11 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git url: 'git@github.com:jerryalex15/challengeFullstackDevOps.git',
-                    credentialsId: 'GitHub-Cred',
-                    branch: 'develop'
+                // Injecte la clé SSH dans l'environnement du job
+                sshagent(['GitHub-Cred']) {
+                    git url: 'git@github.com:jerryalex15/challengeFullstackDevOps.git',
+                        branch: 'develop'
+                }
             }
         }
         // Maven
