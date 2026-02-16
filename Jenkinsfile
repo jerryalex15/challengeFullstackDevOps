@@ -1,12 +1,6 @@
 pipeline {
     agent any
 
-    // define what tools we're going to use
-    tools {
-        jdk 'jdk21'
-        maven 'maven3.9'
-    }
-
     environment {
         DOCKER_REGISTRY = "docker.io"
         DOCKER_IMAGE = "nandraina/challenge-springboot"
