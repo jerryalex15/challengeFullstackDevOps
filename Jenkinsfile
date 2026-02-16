@@ -10,7 +10,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git url: ' git@github.com:jerryalex15/challengeFullstackDevOps.git',
+                git url: 'git@github.com:jerryalex15/challengeFullstackDevOps.git',
                     credentialsId: 'GitHub-cred',
                     branch: 'develop'
             }
