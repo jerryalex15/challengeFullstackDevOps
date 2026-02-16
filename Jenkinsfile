@@ -1,6 +1,7 @@
 pipeline {
     agent any
 
+    // define what tools we're going to use
     tools {
         jdk 'jdk21'
         maven 'maven3.9'
