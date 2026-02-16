@@ -1,4 +1,4 @@
-package com.challenger.jerry.DTO;
+package com.challenger.jerry.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -8,6 +8,7 @@ import lombok.*;
 @Setter
 @Builder
 @AllArgsConstructor
+@NoArgsConstructor
 public class LoginRequest {
     @Email
     @NotBlank

@@ -1,26 +1,18 @@
 package com.challenger.jerry.service;
 
-import com.challenger.jerry.DTO.LoginResponse;
-import com.challenger.jerry.DTO.RegisterRequest;
-import com.challenger.jerry.DTO.RegisterResponse;
+import com.challenger.jerry.dto.LoginRequest;
+import com.challenger.jerry.dto.LoginResponse;
+import com.challenger.jerry.dto.RegisterRequest;
+import com.challenger.jerry.dto.RegisterResponse;
 import com.challenger.jerry.entity.UserInfo;
-import com.challenger.jerry.mapper.UserMapper;
 import com.challenger.jerry.repository.UserInfoRepository;
-import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 @Service
 public class AuthService {
@@ -57,7 +49,7 @@ public class AuthService {
 
         UserInfo savedUser = userInfoRepository.save(userInfo);
 
-        // Retourne un DTO pour ne pas exposer le password
+        // Retourne un dto pour ne pas exposer le password
         return RegisterResponse.builder()
                 .id(savedUser.getId())
                 .email(savedUser.getEmail())
@@ -66,15 +58,15 @@ public class AuthService {
                 .build();
     }
 
-    public LoginResponse login(String email, String password) {
-        UserInfo user = userInfoRepository.findByEmail(email)
+    public LoginResponse login(LoginRequest loginRequest) {
+        UserInfo user = userInfoRepository.findByEmail(loginRequest.getEmail())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
-        if (!passwordEncoder.matches(password, user.getPassword())) {
+        if (!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
             throw new BadCredentialsException("Invalid password");
         }
 
-        String accessToken = jwtService.generateToken(email);
+        String accessToken = jwtService.generateToken(loginRequest.getEmail());
         String refreshToken = jwtService.generateRefreshToken(user);
 
         return new LoginResponse(accessToken, refreshToken);

@@ -1,25 +1,20 @@
 package com.challenger.jerry.controller;
 
-import com.challenger.jerry.DTO.LoginRequest;
-import com.challenger.jerry.DTO.LoginResponse;
-import com.challenger.jerry.DTO.RegisterRequest;
-import com.challenger.jerry.DTO.RegisterResponse;
+import com.challenger.jerry.dto.*;
 import com.challenger.jerry.entity.UserInfo;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 import com.challenger.jerry.repository.RefreshTokenRepository;
 import com.challenger.jerry.service.AuthService;
 import com.challenger.jerry.service.JwtService;
 
 import java.time.LocalDateTime;
-import java.util.Map;
 
 @RestController
 @RequestMapping("api/auth")
@@ -44,32 +39,29 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest loginRequest) throws Exception {
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(loginRequest.getEmail(),loginRequest.getPassword())
-        );
-        if (authentication.isAuthenticated()) {
-            return ResponseEntity.ok().body(this.authService.login(loginRequest.getEmail(), loginRequest.getPassword()));
-        } else {
-            throw new UsernameNotFoundException("Invalid email request!");
+    public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest loginRequest) {
+        try {
+            authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword())
+            );
+            // Si pas d'exception, login OK
+            return ResponseEntity.ok(authService.login(loginRequest));
+        } catch (BadCredentialsException ex) {
+            // Mauvais mot de passe ou email
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
     }
 
     @PostMapping("/refresh_token")
-    public ResponseEntity<?> refreshToken(@RequestBody Map<String, String> request) {
-        String refreshToken = request.get("refreshToken");
+    public ResponseEntity<RefreshTokenResponse> refreshToken(@RequestBody RefreshTokenRequest refreshTokenRequest) {
+        String refreshToken = refreshTokenRequest.getRefreshToken();
 
         return refreshTokenRepository.findByToken(refreshToken)
                 .filter(rt -> rt.getExpiryDate().isAfter(LocalDateTime.now()))
                 .map(rt -> {
                     UserInfo userInfo = rt.getUserInfo();
-                    String newAccessToken = null;
-                    try {
-                        newAccessToken = jwtService.generateToken(userInfo.getEmail());
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
-                    return ResponseEntity.ok(Map.of("accessToken", newAccessToken));
+                    String newAccessToken = jwtService.generateToken(userInfo.getEmail());
+                    return ResponseEntity.ok().body(new RefreshTokenResponse(newAccessToken));
                 })
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
     }

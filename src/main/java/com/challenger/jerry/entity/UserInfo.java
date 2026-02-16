@@ -28,8 +28,10 @@ public class UserInfo {
     private String password;
 
     @Column(nullable = false)
+    @Builder.Default
     private String roles = "ROLE_USER";
 
     @Column(name = "created_at", nullable = false)
+    @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();
 }
