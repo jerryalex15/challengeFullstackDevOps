@@ -9,6 +9,11 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 @Testcontainers
 public abstract class DatabaseInstanceTest {
 
+    static {
+        // Disable Ryuk if needed
+        System.setProperty("testcontainers Ryuk disabled", "true");
+    }
+
     @Container
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine")
             .withDatabaseName("testdb")
