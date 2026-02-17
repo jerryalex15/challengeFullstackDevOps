@@ -5,6 +5,7 @@ pipeline {
         DOCKER_REGISTRY = "docker.io"
         DOCKER_IMAGE = "nandraina/challenge-springboot"
         DOCKER_TAG = "latest"
+        TESTCONTAINERS_RYUK_DISABLED = "true"
     }
 
     stages {
@@ -16,7 +17,9 @@ pipeline {
         // Maven
         stage('Build') {
             steps {
-                sh 'mvn clean verify'
+                withCredentials([string(credentialsId: 'nvd-api-key-id', variable: 'NVD_API_KEY')]) {
+                    sh "mvn clean verify -Dnvd.api.key=${NVD_API_KEY}"
+                }
             }
         }
 
