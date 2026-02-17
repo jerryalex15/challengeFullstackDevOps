@@ -14,11 +14,10 @@ pipeline {
                 checkout scm
             }
         }
-        // Maven
         stage('Build') {
             steps {
                 withCredentials([string(credentialsId: 'nvd-api-key-id', variable: 'NVD_API_KEY')]) {
-                    sh "mvn clean verify -Dnvd.api.key=${NVD_API_KEY}"
+                    sh(script: "mvn clean verify -Dnvd.api.key=\$NVD_API_KEY", returnStdout: true)
                 }
             }
         }
