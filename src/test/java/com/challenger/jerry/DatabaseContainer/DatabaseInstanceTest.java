@@ -11,17 +11,18 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 public abstract class DatabaseInstanceTest {
 
+    // Désactive Ryuk si tu es sur CI ou pour éviter des problèmes de firewall
     static {
-        // Disable Ryuk if needed
-        System.setProperty("testcontainers Ryuk disabled", "true");
+        System.setProperty("TESTCONTAINERS_RYUK_DISABLED", "true");
     }
 
     @Container
-    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine")
-            .withDatabaseName("testdb")
-            .withUsername("test")
-            .withPassword("test");
-
+    protected static final PostgreSQLContainer<?> postgres =
+            new PostgreSQLContainer<>("postgres:16-alpine")
+                    .withDatabaseName("testdb")
+                    .withUsername("test")
+                    .withPassword("test")
+                    .withReuse(true); // option utile pour réutiliser le container entre plusieurs builds
 
     @DynamicPropertySource
     static void configureProperties(DynamicPropertyRegistry registry) {
@@ -29,6 +30,12 @@ public abstract class DatabaseInstanceTest {
         registry.add("spring.datasource.username", postgres::getUsername);
         registry.add("spring.datasource.password", postgres::getPassword);
         registry.add("spring.jpa.hibernate.ddl-auto", () -> "create-drop");
-        registry.add("spring.jpa.properties.hibernate.dialect", () -> "org.hibernate.dialect.PostgreSQLDialect");
+        registry.add("spring.jpa.properties.hibernate.dialect",
+                () -> "org.hibernate.dialect.PostgreSQLDialect");
+
+        // Réduire les problèmes de fermeture Hikari
+        registry.add("spring.datasource.hikari.max-lifetime", () -> 30000); // 30s
+        registry.add("spring.datasource.hikari.shutdown-timeout", () -> 1000); // 1s
+        registry.add("spring.datasource.hikari.validation-timeout", () -> 1000);
     }
 }
