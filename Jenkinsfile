@@ -17,11 +17,10 @@ pipeline {
         stage('Build') {
             steps {
                 withCredentials([string(credentialsId: 'nvd-api-key-id', variable: 'NVD_API_KEY')]) {
-                    sh(script: ['mvn', 'clean', 'verify', "-Dnvd.api.key=$NVD_API_KEY"].join(' '))
+                    sh "mvn clean verify \"-Dnvd.api.key=$NVD_API_KEY\""
                 }
             }
         }
-
         stage('Sonar') {
             steps {
                 sh 'mvn sonar:sonar'
