@@ -2,13 +2,13 @@ FROM jenkins/jenkins:lts-jdk21
 
 USER root
 
-# Installer dépendances
 RUN apt-get update && \
-    apt-get install git && \
-    apt-get install -y maven docker.io && \
+    apt-get install -y git maven docker.io && \
     rm -rf /var/lib/apt/lists/*
 
-# Ajouter user jenkins au groupe docker
-RUN usermod -aG docker jenkins
-
 USER jenkins
+
+ENV JENKINS_HOME=/var/jenkins_home
+VOLUME /var/jenkins_home
+
+EXPOSE 8080 50000
