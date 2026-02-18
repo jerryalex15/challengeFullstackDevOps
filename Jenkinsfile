@@ -5,6 +5,8 @@ pipeline {
         DOCKER_REGISTRY = "docker.io"
         DOCKER_IMAGE = "nandraina/challenge-springboot"
         DOCKER_TAG = "latest"
+        PRIVATE_KEY_PATH = credentials('jenkins-private-key-file')
+        PUBLIC_KEY_PATH  = credentials('jenkins-public-key-file')
     }
 
     stages {

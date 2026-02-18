@@ -15,6 +15,8 @@ import com.challenger.jerry.repository.RefreshTokenRepository;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
@@ -29,12 +31,16 @@ import java.util.function.Function;
 @Service
 public class JwtService {
 
-    // Token Time To Live
-    @Value("${JWT_ACCESS_EXPIRATION}")
+    @Value("${jwt.private-key-path}")
+    private String privateKeyPath;
+
+    @Value("${jwt.public-key-path}")
+    private String publicKeyPath;
+
+    @Value("${jwt.access-expiration}")
     public long jwtExpiration;
 
-    // Time to expire
-    @Value("${JWT_REFRESH_EXPIRATION}")
+    @Value("${jwt.refresh-expiration}")
     public long jwtRefreshExpiration;
 
     @Value("classpath:keys/private_key_pkcs8.pem")
@@ -49,29 +55,38 @@ public class JwtService {
         this.refreshTokenRepository = refreshTokenRepository;
     }
 
-    private PublicKey getPublicKey() throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
-        try (InputStream is = publicKeyResource.getInputStream()) {
-            String publicKeyContent = new String(is.readAllBytes())
+    private PublicKey getPublicKey() throws IOException, NoSuchAlgorithmException, InvalidKeySpecException, SecurityException {
+        String keyContent;
+        if (publicKeyPath != null && !publicKeyPath.isEmpty()) {
+            keyContent = Files.readString(Paths.get(publicKeyPath));
+        } else {
+            try (InputStream is = publicKeyResource.getInputStream()) {
+                keyContent = new String(is.readAllBytes());
+            }
+        }
+        keyContent = keyContent
                     .replace("-----BEGIN PUBLIC KEY-----", "")
                     .replace("-----END PUBLIC KEY-----", "")
                     .replaceAll("\\s+", "");
-            X509EncodedKeySpec keySpec = new X509EncodedKeySpec(Base64.getDecoder().decode(publicKeyContent));
-            return KeyFactory.getInstance("RSA").generatePublic(keySpec);
-        }
+        X509EncodedKeySpec keySpec = new X509EncodedKeySpec(Base64.getDecoder().decode(keyContent));
+        return KeyFactory.getInstance("RSA").generatePublic(keySpec);
     }
 
-    private PrivateKey getPrivateKey() throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
-        try (InputStream is = privateKeyResource.getInputStream()) {
-            String key = new String(is.readAllBytes())
-                    .replace("-----BEGIN PRIVATE KEY-----", "")
-                    .replace("-----END PRIVATE KEY-----", "")
-                    .replaceAll("\\s+", "");
-
-            PKCS8EncodedKeySpec spec =
-                    new PKCS8EncodedKeySpec(Base64.getDecoder().decode(key));
-
-            return KeyFactory.getInstance("RSA").generatePrivate(spec);
+    private PrivateKey getPrivateKey() throws IOException, NoSuchAlgorithmException, InvalidKeySpecException, SecurityException {
+        String keyContent;
+        if (privateKeyPath != null && !privateKeyPath.isEmpty()) {
+            keyContent = Files.readString(Paths.get(privateKeyPath));
+        } else {
+            try (InputStream is = privateKeyResource.getInputStream()) {
+                keyContent = new String(is.readAllBytes());
+            }
         }
+        keyContent = keyContent
+                .replace("-----BEGIN PRIVATE KEY-----", "")
+                .replace("-----END PRIVATE KEY-----", "")
+                .replaceAll("\\s+", "");
+        PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(Base64.getDecoder().decode(keyContent));
+        return KeyFactory.getInstance("RSA").generatePrivate(spec);
     }
 
     // Generate Token with email

@@ -23,8 +23,11 @@ spring:
 # ===============================
 # JWT CONFIGURATION
 # ===============================
-JWT_ACCESS_EXPIRATION: 3600000
-JWT_REFRESH_EXPIRATION: 86400000
+jwt:
+  access-expiration: 3600000        # 1h en ms
+  refresh-expiration: 86400000     # 1j en ms
+  private-key-path: ${PRIVATE_KEY_PATH:}   # valeur par défaut vide
+  public-key-path: ${PUBLIC_KEY_PATH:}
 
 logging:
   level:
