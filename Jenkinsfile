@@ -20,9 +20,9 @@ pipeline {
         stage('Build') {
             steps {
                 withCredentials([string(credentialsId: 'nvd-api-key-id', variable: 'NVD_API_KEY')]) {
-                    sh '''
+                    sh """
                         mvn clean verify -Dnvd.api.key=$NVD_API_KEY
-                    '''
+                    """
                 }
             }
         }
