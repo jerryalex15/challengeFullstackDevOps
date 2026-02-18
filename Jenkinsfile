@@ -7,6 +7,7 @@ pipeline {
         DOCKER_TAG = "latest"
         TESTCONTAINERS_RYUK_DISABLED = "true"
     }
+
     stages {
         stage('Checkout') {
             steps {
