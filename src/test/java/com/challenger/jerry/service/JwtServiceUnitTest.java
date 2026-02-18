@@ -35,18 +35,9 @@ class JwtServiceUnitTest {
         jwtService.jwtExpiration = 1000 * 60 * 60;        // 1h
         jwtService.jwtRefreshExpiration = 1000 * 60 * 60 * 24; // 1j
 
-        // Injecter les fichiers PEM manuellement
-        ReflectionTestUtils.setField(
-                jwtService,
-                "privateKeyResource",
-                new ClassPathResource("keys/private_key_pkcs8.pem")
-        );
-
-        ReflectionTestUtils.setField(
-                jwtService,
-                "publicKeyResource",
-                new ClassPathResource("keys/public_key.pem")
-        );
+        // injecter les fichiers PEM via classpath
+        ReflectionTestUtils.setField(jwtService, "privateKeyResource", new ClassPathResource("keys/private_key_pkcs8.pem"));
+        ReflectionTestUtils.setField(jwtService, "publicKeyResource", new ClassPathResource("keys/public_key.pem"));
     }
 
     @Test
