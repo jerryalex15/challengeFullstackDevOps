@@ -11,12 +11,10 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                checkout([$class: 'GitSCM',
-                    branches: [[name: '*/develop']], // <-- la branche à builder
-                    doGenerateSubmoduleConfigurations: false,
-                    extensions: [[$class: 'CleanBeforeCheckout']], // option utile pour forcer le build
-                    userRemoteConfigs: [[url: 'git@github.com:jerryalex15/challengeFullstackDevOps.git', credentialsId: 'GitHub-Cred']]]
-                )
+                // Supprime le workspace si nécessaire
+                deleteDir()
+                // Clone le repo
+                git branch: 'main', url: 'git@github.com:jerryalex15/challengeFullstackDevOps.git'
             }
         }
         stage('Build') {
