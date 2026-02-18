@@ -5,7 +5,6 @@ pipeline {
         DOCKER_REGISTRY = "docker.io"
         DOCKER_IMAGE = "nandraina/challenge-springboot"
         DOCKER_TAG = "latest"
-        TESTCONTAINERS_RYUK_DISABLED = "true"
     }
 
     stages {
