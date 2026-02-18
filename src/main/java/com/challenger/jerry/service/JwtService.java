@@ -8,11 +8,11 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import com.challenger.jerry.repository.RefreshTokenRepository;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.KeyFactory;
@@ -37,6 +37,12 @@ public class JwtService {
     @Value("${JWT_REFRESH_EXPIRATION}")
     public long jwtRefreshExpiration;
 
+    @Value("classpath:keys/private_key_pkcs8.pem")
+    public Resource privateKeyResource;
+
+    @Value("classpath:keys/public_key.pem")
+    public Resource publicKeyResource;
+
     private final RefreshTokenRepository refreshTokenRepository;
     @Autowired
     public JwtService(RefreshTokenRepository refreshTokenRepository) {
@@ -44,31 +50,28 @@ public class JwtService {
     }
 
     private PublicKey getPublicKey() throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
-        InputStream is = getClass().getClassLoader().getResourceAsStream("keys/public_key.pem");
-        if (is == null) {
-            throw new FileNotFoundException("public_key.pem not found in resources/keys");
+        try (InputStream is = publicKeyResource.getInputStream()) {
+            String publicKeyContent = new String(is.readAllBytes())
+                    .replace("-----BEGIN PUBLIC KEY-----", "")
+                    .replace("-----END PUBLIC KEY-----", "")
+                    .replaceAll("\\s+", "");
+            X509EncodedKeySpec keySpec = new X509EncodedKeySpec(Base64.getDecoder().decode(publicKeyContent));
+            return KeyFactory.getInstance("RSA").generatePublic(keySpec);
         }
-        String publicKeyContent = new String(is.readAllBytes())
-                .replace("-----BEGIN PUBLIC KEY-----", "")
-                .replace("-----END PUBLIC KEY-----", "")
-                .replaceAll("\\s+", "");
-        X509EncodedKeySpec keySpec = new X509EncodedKeySpec(Base64.getDecoder().decode(publicKeyContent));
-        KeyFactory kf = KeyFactory.getInstance("RSA");
-        return kf.generatePublic(keySpec);
     }
 
     private PrivateKey getPrivateKey() throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
-        InputStream is = getClass().getClassLoader().getResourceAsStream("keys/private_key_pkcs8.pem");
-        if (is == null) {
-            throw new FileNotFoundException("private_key_pkcs8.pem not found in resources/keys");
+        try (InputStream is = privateKeyResource.getInputStream()) {
+            String key = new String(is.readAllBytes())
+                    .replace("-----BEGIN PRIVATE KEY-----", "")
+                    .replace("-----END PRIVATE KEY-----", "")
+                    .replaceAll("\\s+", "");
+
+            PKCS8EncodedKeySpec spec =
+                    new PKCS8EncodedKeySpec(Base64.getDecoder().decode(key));
+
+            return KeyFactory.getInstance("RSA").generatePrivate(spec);
         }
-        String key = new String(is.readAllBytes())
-                .replace("-----BEGIN PRIVATE KEY-----", "")
-                .replace("-----END PRIVATE KEY-----", "")
-                .replaceAll("\\s+", "");
-        PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(Base64.getDecoder().decode(key));
-        KeyFactory kf = KeyFactory.getInstance("RSA");
-        return kf.generatePrivate(spec);
     }
 
     // Generate Token with email
