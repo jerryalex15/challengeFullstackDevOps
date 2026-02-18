@@ -13,7 +13,7 @@ public abstract class DatabaseInstanceTest {
 
     // Désactive Ryuk si tu es sur CI ou pour éviter des problèmes de firewall
     static {
-        System.setProperty("TESTCONTAINERS_RYUK_DISABLED", "true");
+        System.clearProperty("TESTCONTAINERS_RYUK_DISABLED");
     }
 
     @Container
