@@ -15,7 +15,7 @@ pipeline {
                     branches: [[name: '*/develop']], // <-- la branche à builder
                     doGenerateSubmoduleConfigurations: false,
                     extensions: [[$class: 'CleanBeforeCheckout']], // option utile pour forcer le build
-                    userRemoteConfigs: [[url: 'git@github.com:jerryalex15/challengeFullstackDevOps.git', credentialsId: 'github-ssh']]]
+                    userRemoteConfigs: [[url: 'git@github.com:jerryalex15/challengeFullstackDevOps.git', credentialsId: 'GitHub-Cred']]]
                 )
             }
         }
