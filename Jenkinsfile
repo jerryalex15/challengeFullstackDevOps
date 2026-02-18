@@ -11,10 +11,10 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                // Supprime le workspace si nécessaire
-                deleteDir()
-                // Clone le repo
-                git branch: 'main', url: 'git@github.com:jerryalex15/challengeFullstackDevOps.git'
+                deleteDir() // supprime le workspace
+                git branch: 'develop',
+                    url: 'https://github.com/jerryalex15/challengeFullstackDevOps.git',
+                    credentialsId: 'github-token-id'
             }
         }
         stage('Build') {
