@@ -17,6 +17,7 @@ pipeline {
                     credentialsId: 'github-token-id'
             }
         }
+
         stage('Build') {
             steps {
                 withCredentials([string(credentialsId: 'nvd-api-key-id', variable: 'NVD_API_KEY')]) {
