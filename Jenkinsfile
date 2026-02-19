@@ -22,15 +22,9 @@ pipeline {
         stage('Build') {
             steps {
                 withCredentials([string(credentialsId: 'nvd-api-key-id', variable: 'NVD_API_KEY')]) {
-                    sh """
-                        echo "Building project..."
-                        echo "NVD_API_KEY is set: ${NVD_API_KEY ? 'YES' : 'NO'}"
-                        if [ -z "$NVD_API_KEY" ]; then
-                            echo "ERROR: NVD_API_KEY is empty!"
-                            exit 1
-                        fi
-                        mvn clean verify -Ddependency-check.forceUpdate=true -DnvdApiKey="$NVD_API_KEY"
-                    """
+                        withEnv(["MAVEN_OPTS=-DnvdApiKey=$NVD_API_KEY"]) {
+                            sh "mvn clean verify -Ddependency-check.forceUpdate=true"
+                        }
                 }
             }
         }
