@@ -30,8 +30,8 @@ pipeline {
         }
         stage('Sonar') {
             environment {
-                SONAR_HOST_URL = 'http://localhost:9000'
-                SONAR_LOGIN = credentials('SonarCubeToken')
+                SONAR_HOST_URL = 'http://sonarqube:9000'
+                SONAR_LOGIN = credentials('SonarQube-token')
             }
             steps {
                 sh 'mvn sonar:sonar -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.login=$SONAR_LOGIN'
