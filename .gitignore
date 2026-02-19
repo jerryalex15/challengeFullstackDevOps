@@ -36,6 +36,25 @@ build/
 .env
 .env.prod
 
-### RSA private keys
-private_key.pem
-private_key_pkcs8.pem
+# IMPORTANT : jamais push les clés prod
+src/main/resources/keys/*
+keys/*
+*.pem
+*.key
+*.crt
+
+# MAIS autoriser les clés de TEST
+!src/test/resources/keys/
+!src/test/resources/keys/*.pem
+
+####################################
+# Docker
+####################################
+docker-compose.override.yml
+
+####################################
+# Sonar / Coverage
+####################################
+.sonar/
+coverage/
+jacoco.exec

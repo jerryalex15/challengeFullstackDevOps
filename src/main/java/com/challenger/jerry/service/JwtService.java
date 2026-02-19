@@ -32,10 +32,10 @@ import java.util.function.Function;
 public class JwtService {
 
     @Value("${jwt.private-key-path}")
-    private String privateKeyPath;
+    String privateKeyPath;
 
     @Value("${jwt.public-key-path}")
-    private String publicKeyPath;
+    String publicKeyPath;
 
     @Value("${jwt.access-expiration}")
     public long jwtExpiration;

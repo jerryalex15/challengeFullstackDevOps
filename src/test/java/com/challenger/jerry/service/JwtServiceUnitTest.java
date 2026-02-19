@@ -12,8 +12,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Optional;
 
@@ -35,9 +33,8 @@ class JwtServiceUnitTest {
         jwtService.jwtExpiration = 1000 * 60 * 60;        // 1h
         jwtService.jwtRefreshExpiration = 1000 * 60 * 60 * 24; // 1j
 
-        // injecter les fichiers PEM via classpath
-        ReflectionTestUtils.setField(jwtService, "privateKeyResource", new ClassPathResource("keys/private_key_pkcs8.pem"));
-        ReflectionTestUtils.setField(jwtService, "publicKeyResource", new ClassPathResource("keys/public_key.pem"));
+        jwtService.privateKeyPath = "src/test/resources/keys/private_key_pkcs8.pem";
+        jwtService.publicKeyPath = "src/test/resources/keys/public_key.pem";
     }
 
     @Test
