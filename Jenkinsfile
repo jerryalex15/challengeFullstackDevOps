@@ -24,6 +24,7 @@ pipeline {
                 withCredentials([string(credentialsId: 'nvd-api-key-id', variable: 'NVD_API_KEY')]) {
                     sh """
                         echo "Building project..."
+                        echo "NVD_API_KEY is set: ${NVD_API_KEY ? 'YES' : 'NO'}"
                         if [ -z "$NVD_API_KEY" ]; then
                             echo "ERROR: NVD_API_KEY is empty!"
                             exit 1
