@@ -24,7 +24,7 @@ pipeline {
                 withCredentials([string(credentialsId: 'nvd-api-key-id', variable: 'NVD_API_KEY')]) {
                     sh '''
                         echo "Building project..."
-                        mvn clean verify -Dnvd.api.key="$NVD_API_KEY"
+                        mvn clean verify -DnvdApiKey="$NVD_API_KEY"
                     '''
                 }
             }
