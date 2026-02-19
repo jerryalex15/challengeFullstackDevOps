@@ -26,8 +26,8 @@ spring:
 jwt:
   access-expiration: 3600000        # 1h en ms
   refresh-expiration: 86400000     # 1j en ms
-  private-key-path: ${PRIVATE_KEY_PATH:}   # valeur par défaut vide
-  public-key-path: ${PUBLIC_KEY_PATH:}
+  private-key-path: ${PRIVATE_KEY_PATH:}   # variable d'env Jenkins
+  public-key-path: ${PUBLIC_KEY_PATH:}     # variable d'env Jenkins
 
 logging:
   level:

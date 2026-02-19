@@ -57,26 +57,27 @@ public class JwtService {
 
     private PublicKey getPublicKey() throws IOException, NoSuchAlgorithmException, InvalidKeySpecException, SecurityException {
         String keyContent;
-        if (publicKeyPath != null && !publicKeyPath.isEmpty()) {
-            keyContent = Files.readString(Paths.get(publicKeyPath));
+        if (publicKeyPath != null && !publicKeyPath.isBlank() && Files.exists(Paths.get(publicKeyPath))) {
+            keyContent = Files.readString(Paths.get(publicKeyPath)); // Jenkins
         } else {
             try (InputStream is = publicKeyResource.getInputStream()) {
                 keyContent = new String(is.readAllBytes());
             }
         }
         keyContent = keyContent
-                    .replace("-----BEGIN PUBLIC KEY-----", "")
-                    .replace("-----END PUBLIC KEY-----", "")
-                    .replaceAll("\\s+", "");
+                .replace("-----BEGIN PUBLIC KEY-----", "")
+                .replace("-----END PUBLIC KEY-----", "")
+                .replaceAll("\\s+", "");
         X509EncodedKeySpec keySpec = new X509EncodedKeySpec(Base64.getDecoder().decode(keyContent));
         return KeyFactory.getInstance("RSA").generatePublic(keySpec);
     }
 
     private PrivateKey getPrivateKey() throws IOException, NoSuchAlgorithmException, InvalidKeySpecException, SecurityException {
         String keyContent;
-        if (privateKeyPath != null && !privateKeyPath.isEmpty()) {
-            keyContent = Files.readString(Paths.get(privateKeyPath));
+        if (privateKeyPath != null && !privateKeyPath.isBlank() && Files.exists(Paths.get(privateKeyPath))) {
+            keyContent = Files.readString(Paths.get(privateKeyPath)); // Jenkins
         } else {
+            // fallback local
             try (InputStream is = privateKeyResource.getInputStream()) {
                 keyContent = new String(is.readAllBytes());
             }
