@@ -29,8 +29,12 @@ pipeline {
             }
         }
         stage('Sonar') {
+            environment {
+                SONAR_HOST_URL = 'http://localhost:9000'
+                SONAR_LOGIN = credentials('SonarCubeToken')
+            }
             steps {
-                sh 'mvn sonar:sonar'
+                sh 'mvn sonar:sonar -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.login=$SONAR_LOGIN'
             }
         }
         stage('Build Docker Image') {
