@@ -13,7 +13,7 @@ public abstract class DatabaseInstanceTest {
 
     // Désactive Ryuk si tu es sur CI ou pour éviter des problèmes de firewall
     static {
-        System.clearProperty("TESTCONTAINERS_RYUK_DISABLED");
+        System.setProperty("TESTCONTAINERS_RYUK_DISABLED", "true");
     }
 
     @Container
@@ -21,8 +21,7 @@ public abstract class DatabaseInstanceTest {
             new PostgreSQLContainer<>("postgres:16-alpine")
                     .withDatabaseName("testdb")
                     .withUsername("test")
-                    .withPassword("test")
-                    .withReuse(true); // option utile pour réutiliser le container entre plusieurs builds
+                    .withPassword("test");
 
     @DynamicPropertySource
     static void configureProperties(DynamicPropertyRegistry registry) {
