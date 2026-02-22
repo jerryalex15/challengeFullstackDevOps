@@ -7,7 +7,9 @@ pipeline {
         DOCKER_TAG = "latest"
         PRIVATE_KEY_PATH = credentials('jenkins-private-key-file')
         PUBLIC_KEY_PATH  = credentials('jenkins-public-key-file')
-        TESTCONTAINERS_RYUK_DISABLED = 'true'
+        TESTCONTAINERS_RYUK_DISABLED=true
+        // IMPORTANT pour macOS + Testcontainers
+        TESTCONTAINERS_HOST_OVERRIDE = "host.docker.internal"
     }
 
     stages {
@@ -20,24 +22,33 @@ pipeline {
             }
         }
 
-        stage('Build') {
+        stage('Build + Tests') {
             steps {
                 withCredentials([string(credentialsId: 'nvd-api-key-id', variable: 'NVD_API_KEY')]) {
-                        withEnv(["MAVEN_OPTS=-DnvdApiKey=$NVD_API_KEY"]) {
-                            sh "mvn clean verify -Ddependency-check.forceUpdate=true"
-                        }
+                    withEnv(["MAVEN_OPTS=-DnvdApiKey=$NVD_API_KEY"]) {
+                        sh """
+                        mvn clean verify \
+                          -Ddependency-check.forceUpdate=true
+                        """
+                    }
                 }
             }
         }
-        stage('Sonar') {
+
+        stage('Sonar Analysis') {
             environment {
                 SONAR_HOST_URL = 'http://sonarqube:9000'
                 SONAR_LOGIN = credentials('SonarQube-token')
             }
             steps {
-                sh 'mvn sonar:sonar -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.login=$SONAR_LOGIN'
+                sh """
+                mvn sonar:sonar \
+                  -Dsonar.host.url=$SONAR_HOST_URL \
+                  -Dsonar.login=$SONAR_LOGIN
+                """
             }
         }
+
         stage('Build Docker Image') {
             steps {
                 sh """
@@ -47,7 +58,13 @@ pipeline {
         }
         stage('Push Docker Image') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'docker-hub-cred', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'docker-hub-cred',
+                        usernameVariable: 'DOCKER_USER',
+                        passwordVariable: 'DOCKER_PASS'
+                    )
+                ]) {
                     sh """
                     echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
                     docker push $DOCKER_IMAGE:$DOCKER_TAG
