@@ -7,7 +7,6 @@ import com.challenger.jerry.repository.RefreshTokenRepository;
 import com.challenger.jerry.repository.UserInfoRepository;
 import com.challenger.jerry.service.AuthService;
 import com.challenger.jerry.service.JwtService;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +16,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
@@ -26,6 +26,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc(addFilters = false)
+@Transactional
 class AuthControllerIntegrationTest extends DatabaseInstanceTest {
 
     @Autowired
@@ -53,21 +54,12 @@ class AuthControllerIntegrationTest extends DatabaseInstanceTest {
 
     @BeforeEach
     void setup() {
-        refreshTokenRepository.deleteAll(); // before users to avoid foreign key constraints violations
-        userInfoRepository.deleteAll();
-
         user = new UserInfo();
         user.setEmail("test@gmail.com");
         user.setFullName("Test User");
         user.setRoles("ROLE_USER");
         user.setPassword(encoder.encode("password"));
         userInfoRepository.save(user);
-    }
-
-    @AfterEach
-    void cleanup(){
-        refreshTokenRepository.deleteAll(); // before users to avoid foreign key constraints violations
-        userInfoRepository.deleteAll();
     }
 
     @Test
