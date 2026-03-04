@@ -13,7 +13,7 @@ public abstract class DatabaseInstanceTest {
 
     @Container
     protected static final PostgreSQLContainer<?> postgres =
-            new PostgreSQLContainer<>("postgres:16-alpine")
+            new PostgreSQLContainer<>("postgres:15-alpine")
                     .withDatabaseName("testdb")
                     .withUsername("test")
                     .withPassword("test");

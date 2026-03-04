@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @AllArgsConstructor
@@ -27,9 +29,14 @@ public class UserInfo {
     @Column(nullable = false)
     private String password;
 
-    @Column(nullable = false)
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+            name= "users_roles",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "role_id")
+    )
     @Builder.Default
-    private String roles = "ROLE_USER";
+    private Set<Role> roles = new HashSet<>();
 
     @Column(name = "created_at", nullable = false)
     @Builder.Default

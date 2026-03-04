@@ -4,7 +4,9 @@ import com.challenger.jerry.dto.LoginRequest;
 import com.challenger.jerry.dto.LoginResponse;
 import com.challenger.jerry.dto.RegisterRequest;
 import com.challenger.jerry.dto.RegisterResponse;
+import com.challenger.jerry.entity.Role;
 import com.challenger.jerry.entity.UserInfo;
+import com.challenger.jerry.repository.RoleRepository;
 import com.challenger.jerry.repository.UserInfoRepository;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -19,12 +21,16 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
+import java.util.Set;
 
 @ExtendWith(MockitoExtension.class)
 class AuthServiceUnitTest {
 
     @Mock
     private UserInfoRepository userInfoRepository;
+
+    @Mock
+    private RoleRepository roleRepository;
 
     @Mock
     private PasswordEncoder passwordEncoder;
@@ -47,18 +53,23 @@ class AuthServiceUnitTest {
         String email = "test@gmail.com";
         String password = "password";
         String fullName = "Full Name";
+        String roleName = "ROLE_USER";
+        Role defaultRole = Role.builder().id(1L).name(roleName).build();
+
         RegisterRequest registerRequest = new RegisterRequest(email, password, fullName);
         Mockito.when(userInfoRepository.existsByEmail(Mockito.anyString()))
                         .thenReturn(false);
         Mockito.when(passwordEncoder.encode(Mockito.anyString()))
                 .thenReturn("encodedPassword");
+        Mockito.when(roleRepository.findByName(roleName))
+                .thenReturn(Optional.of(defaultRole));
 
         UserInfo savedUser = UserInfo.builder()
                 .id(1L)
                 .email(email)
                 .password("encodedPassword")
                 .fullName(fullName)
-                .roles("ROLE_USER")
+                .roles(Set.of(defaultRole))
                 .createdAt(LocalDateTime.now())
                 .build();
 
@@ -105,7 +116,7 @@ class AuthServiceUnitTest {
         userInfo.setPassword("encodedPassword");
 
         // WHEN
-        Mockito.when(userInfoRepository.findByEmail(email))
+        Mockito.when(userInfoRepository.findByEmailWithRoles(email))
                         .thenReturn(Optional.of(userInfo));
 
         Mockito.when(jwtService.generateToken(email))
@@ -125,7 +136,7 @@ class AuthServiceUnitTest {
         Assertions.assertNotNull(loginResponse.getRefreshToken());
 
         // VERIFY
-        Mockito.verify(userInfoRepository).findByEmail(email);
+        Mockito.verify(userInfoRepository).findByEmailWithRoles(email);
         Mockito.verify(passwordEncoder).matches("password", "encodedPassword");
         Mockito.verify(jwtService).generateToken(email);
         Mockito.verify(jwtService).generateRefreshToken(userInfo);

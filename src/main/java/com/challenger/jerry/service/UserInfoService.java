@@ -1,6 +1,7 @@
 package com.challenger.jerry.service;
 
 import com.challenger.jerry.dto.UserResponse;
+import com.challenger.jerry.entity.Role;
 import com.challenger.jerry.entity.UserInfo;
 import com.challenger.jerry.repository.UserInfoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,6 +11,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+
+import java.util.List;
 
 @Service
 public class UserInfoService {
@@ -22,11 +25,14 @@ public class UserInfoService {
     }
 
     private UserResponse mapToDto(UserInfo user) {
+        List<String> roles = user.getRoles().stream()
+                .map(Role::getName)
+                .toList();
         return new UserResponse(
                 user.getId(),
                 user.getEmail(),
                 user.getFullName(),
-                user.getRoles()
+                roles
         );
     }
 
@@ -39,7 +45,7 @@ public class UserInfoService {
         }
 
         String email = authentication.getName();
-        UserInfo user = userInfoRepository.findByEmail(email)
+        UserInfo user = userInfoRepository.findByEmailWithRoles(email)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User with email " + email + " not found"));
 
         return mapToDto(user);

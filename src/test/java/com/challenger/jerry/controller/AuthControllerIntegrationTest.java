@@ -2,8 +2,10 @@ package com.challenger.jerry.controller;
 
 import com.challenger.jerry.DatabaseContainer.DatabaseInstanceTest;
 import com.challenger.jerry.entity.RefreshToken;
+import com.challenger.jerry.entity.Role;
 import com.challenger.jerry.entity.UserInfo;
 import com.challenger.jerry.repository.RefreshTokenRepository;
+import com.challenger.jerry.repository.RoleRepository;
 import com.challenger.jerry.repository.UserInfoRepository;
 import com.challenger.jerry.service.AuthService;
 import com.challenger.jerry.service.JwtService;
@@ -19,6 +21,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Set;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -39,6 +42,9 @@ class AuthControllerIntegrationTest extends DatabaseInstanceTest {
     private RefreshTokenRepository refreshTokenRepository;
 
     @Autowired
+    private RoleRepository roleRepository;
+
+    @Autowired
     private PasswordEncoder encoder;
 
     @Autowired
@@ -54,10 +60,14 @@ class AuthControllerIntegrationTest extends DatabaseInstanceTest {
 
     @BeforeEach
     void setup() {
+        Role defaultRole =  new Role();
+        defaultRole.setName("ROLE_USER");
+        defaultRole = roleRepository.save(defaultRole);
+
         user = new UserInfo();
         user.setEmail("test@gmail.com");
         user.setFullName("Test User");
-        user.setRoles("ROLE_USER");
+        user.setRoles(Set.of(defaultRole));
         user.setPassword(encoder.encode("password"));
         userInfoRepository.save(user);
     }

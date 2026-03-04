@@ -2,6 +2,7 @@ package com.challenger.jerry.controller;
 
 import com.challenger.jerry.dto.*;
 import com.challenger.jerry.entity.UserInfo;
+import com.challenger.jerry.exception.InvalidRefreshTokenException;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -21,15 +22,11 @@ import java.time.LocalDateTime;
 public class AuthController {
     private final AuthService authService;
     private final AuthenticationManager authenticationManager;
-    private final JwtService jwtService;
-    private final RefreshTokenRepository refreshTokenRepository;
 
     @Autowired
     public AuthController(AuthService authService, AuthenticationManager authenticationManager, JwtService jwtService, RefreshTokenRepository refreshTokenRepository) {
         this.authService = authService;
         this.authenticationManager = authenticationManager;
-        this.jwtService = jwtService;
-        this.refreshTokenRepository = refreshTokenRepository;
     }
 
     @PostMapping("/register")
@@ -53,16 +50,15 @@ public class AuthController {
     }
 
     @PostMapping("/refresh_token")
-    public ResponseEntity<RefreshTokenResponse> refreshToken(@RequestBody RefreshTokenRequest refreshTokenRequest) {
-        String refreshToken = refreshTokenRequest.getRefreshToken();
-
-        return refreshTokenRepository.findByToken(refreshToken)
-                .filter(rt -> rt.getExpiryDate().isAfter(LocalDateTime.now()))
-                .map(rt -> {
-                    UserInfo userInfo = rt.getUserInfo();
-                    String newAccessToken = jwtService.generateToken(userInfo.getEmail());
-                    return ResponseEntity.ok().body(new RefreshTokenResponse(newAccessToken));
-                })
-                .orElseGet(() -> ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
+    public ResponseEntity<?> refreshToken(@RequestBody RefreshTokenRequest refreshTokenRequest) {
+        try {
+            RefreshTokenResponse response = authService.refreshToken(refreshTokenRequest.getRefreshToken());
+            return ResponseEntity.ok(response);
+        } catch (InvalidRefreshTokenException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new ErrorResponse(e.getMessage()));
+        }
     }
+
+
 }

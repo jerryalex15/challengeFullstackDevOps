@@ -1,6 +1,7 @@
 package com.challenger.jerry.service;
 
 import com.challenger.jerry.dto.UserResponse;
+import com.challenger.jerry.entity.Role;
 import com.challenger.jerry.entity.UserInfo;
 import com.challenger.jerry.repository.UserInfoRepository;
 import org.junit.jupiter.api.Assertions;
@@ -18,6 +19,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
+import java.util.Set;
 
 @ExtendWith(MockitoExtension.class)
 class UserInfoServiceUnitTest {
@@ -43,7 +45,7 @@ class UserInfoServiceUnitTest {
                 .id(1L)
                 .email(email)
                 .fullName("Test User")
-                .roles("ROLE_USER")
+                .roles(Set.of(Role.builder().id(1L).name("ROLE_USER").build()))
                 .createdAt(LocalDateTime.now())
                 .build();
 
@@ -54,7 +56,7 @@ class UserInfoServiceUnitTest {
         Mockito.when(authentication.isAuthenticated()).thenReturn(true);
         Mockito.when(authentication.getName()).thenReturn(email);
 
-        Mockito.when(this.userInfoRepository.findByEmail(email))
+        Mockito.when(this.userInfoRepository.findByEmailWithRoles(email))
                 .thenReturn(Optional.of(user));
         // WHEN
         UserResponse userResponse = this.userInfoService.getCurrentUser();
@@ -98,7 +100,7 @@ class UserInfoServiceUnitTest {
                 .thenReturn(true);
         Mockito.when(authentication.getName())
                 .thenReturn(email);
-        Mockito.when(userInfoRepository.findByEmail(email)).thenReturn(Optional.empty());
+        Mockito.when(userInfoRepository.findByEmailWithRoles(email)).thenReturn(Optional.empty());
 
         // WHEN & THEN
         ResponseStatusException exception = Assertions.assertThrows(
