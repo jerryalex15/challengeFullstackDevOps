@@ -201,4 +201,34 @@ class AuthControllerE2ETest extends DatabaseInstanceTest {
         // THEN
         Assertions.assertEquals(HttpStatus.OK, response.getStatusCode());
     }
+
+    @Test
+    void logoutSuccessfulE2E() {
+        // GIVEN - Login pour obtenir un vrai access token
+        LoginRequest loginRequest = new LoginRequest("test@gmail.com", "password");
+
+        HttpHeaders loginHeaders = new HttpHeaders();
+        loginHeaders.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<LoginRequest> loginEntity = new HttpEntity<>(loginRequest, loginHeaders);
+
+        ResponseEntity<LoginResponse> loginResponse =
+                restTemplate.postForEntity("/api/auth/login", loginEntity, LoginResponse.class);
+
+        Assertions.assertEquals(HttpStatus.OK, loginResponse.getStatusCode());
+
+        String accessToken = loginResponse.getBody().getAccessToken();
+
+        // WHEN - Logout avec le vrai access token
+        HttpHeaders logoutHeaders = new HttpHeaders();
+        logoutHeaders.setBearerAuth(accessToken);
+
+        HttpEntity<Void> logoutEntity = new HttpEntity<>(logoutHeaders);
+
+        ResponseEntity<Void> logoutResponse =
+                restTemplate.postForEntity("/api/auth/logout", logoutEntity, Void.class);
+
+        // THEN
+        Assertions.assertEquals(HttpStatus.NO_CONTENT, logoutResponse.getStatusCode());
+    }
 }

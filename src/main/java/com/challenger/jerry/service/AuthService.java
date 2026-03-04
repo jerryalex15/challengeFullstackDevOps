@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 import java.util.Set;
 
 @Service
@@ -105,5 +106,14 @@ public class AuthService {
         UserInfo userInfo = rt.getUserInfo();
         String newAccessToken = jwtService.generateToken(userInfo.getEmail());
         return new RefreshTokenResponse(newAccessToken);
+    }
+
+    public void logout(String email) {
+        UserInfo user = userInfoRepository.findByEmailWithRoles(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        RefreshToken rt = refreshTokenRepository.findByUserInfo(user)
+                .orElseThrow(() -> new InvalidRefreshTokenException("Invalid Refresh Token"));
+
+        refreshTokenRepository.delete(rt);
     }
 }

@@ -53,12 +53,10 @@ public class SecurityConfig {
                         // OPTIONS should always be allowed
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         // Public endpoints
+                        .requestMatchers("/api/auth/logout").authenticated()
                         .requestMatchers("/api/auth/**").permitAll()
-                        // Role-based endpoints
                         .requestMatchers("/api/user/**").hasAuthority("ROLE_USER")
                         .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
-
-                        // All other endpoints require authentication
                         .anyRequest().authenticated())
                 // Stateless session (required for JWT)
                 .sessionManagement(session ->

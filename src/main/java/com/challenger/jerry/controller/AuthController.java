@@ -10,12 +10,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import com.challenger.jerry.repository.RefreshTokenRepository;
 import com.challenger.jerry.service.AuthService;
 import com.challenger.jerry.service.JwtService;
 
-import java.time.LocalDateTime;
+import java.util.HashMap;
 
 @RestController
 @RequestMapping("api/auth")
@@ -60,5 +61,11 @@ public class AuthController {
         }
     }
 
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(Authentication authentication){
+        String email = authentication.getName();
+        authService.logout(email);
 
+        return ResponseEntity.noContent().build();
+    }
 }

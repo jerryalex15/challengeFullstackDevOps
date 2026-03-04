@@ -1,11 +1,11 @@
 package com.challenger.jerry.service;
 
-import com.challenger.jerry.dto.LoginRequest;
-import com.challenger.jerry.dto.LoginResponse;
-import com.challenger.jerry.dto.RegisterRequest;
-import com.challenger.jerry.dto.RegisterResponse;
+import com.challenger.jerry.dto.*;
+import com.challenger.jerry.entity.RefreshToken;
 import com.challenger.jerry.entity.Role;
 import com.challenger.jerry.entity.UserInfo;
+import com.challenger.jerry.exception.InvalidRefreshTokenException;
+import com.challenger.jerry.repository.RefreshTokenRepository;
 import com.challenger.jerry.repository.RoleRepository;
 import com.challenger.jerry.repository.UserInfoRepository;
 import org.junit.jupiter.api.Assertions;
@@ -28,6 +28,9 @@ class AuthServiceUnitTest {
 
     @Mock
     private UserInfoRepository userInfoRepository;
+
+    @Mock
+    private RefreshTokenRepository refreshTokenRepository;
 
     @Mock
     private RoleRepository roleRepository;
@@ -140,5 +143,113 @@ class AuthServiceUnitTest {
         Mockito.verify(passwordEncoder).matches("password", "encodedPassword");
         Mockito.verify(jwtService).generateToken(email);
         Mockito.verify(jwtService).generateRefreshToken(userInfo);
+    }
+
+    @Test
+    void shouldCreateRefreshToken() {
+        // GIVEN
+        String token = "refeshToken";
+        UserInfo user = UserInfo.builder()
+                .id(1L)
+                .fullName("Name")
+                .email("email@test.com")
+                .password("encodedPassword")
+                .createdAt(LocalDateTime.now())
+                .roles(Set.of(new Role(1L,"USER_ROLE")))
+                .build();
+        RefreshToken refreshToken = RefreshToken.builder()
+                .id(1L)
+                .token(token)
+                .expiryDate(LocalDateTime.now().plusDays(1))
+                .userInfo(user)
+                .build();
+
+        Mockito.when(refreshTokenRepository.findByToken(Mockito.anyString()))
+                .thenReturn(Optional.of(refreshToken));
+        Mockito.when(jwtService.generateToken(Mockito.anyString()))
+                .thenReturn("newAccessToken");
+
+        // WHEN
+        RefreshTokenResponse response = authService.refreshToken(token);
+
+        // THEN
+        Assertions.assertEquals("newAccessToken", response.getAccessToken());
+        Mockito.verify(jwtService).generateToken(user.getEmail());
+    }
+
+    @Test
+    void shouldReturnInvalidRefreshTokenWhenFailed(){
+        // GIVEN
+        String token = "refreshToken";
+        Mockito.when(refreshTokenRepository.findByToken(Mockito.anyString()))
+                .thenThrow(new InvalidRefreshTokenException("Invalid Refresh Token : " + token ));
+
+        // WHEN + THEN
+        InvalidRefreshTokenException exception = Assertions.assertThrows(
+                InvalidRefreshTokenException.class,
+                () -> {
+                    this.authService.refreshToken(token);
+                }
+        );
+
+        // THEN
+        Assertions.assertEquals("Invalid Refresh Token : " + token, exception.getMessage());
+        Mockito.verify(jwtService, Mockito.never()).generateToken(token);
+    }
+
+    @Test
+    void shouldLogoutSuccessfully(){
+        // GIVEN
+        String token = "token";
+        UserInfo user = UserInfo.builder()
+                .id(1L)
+                .fullName("Name")
+                .email("email@test.com")
+                .password("encodedPassword")
+                .createdAt(LocalDateTime.now())
+                .roles(Set.of(new Role(1L,"USER_ROLE")))
+                .build();
+
+        RefreshToken refreshToken = RefreshToken.builder()
+                .id(1L)
+                .token(token)
+                .expiryDate(LocalDateTime.now().plusDays(1))
+                .userInfo(user)
+                .build();
+        Mockito.when(userInfoRepository.findByEmailWithRoles(Mockito.anyString()))
+                .thenReturn(Optional.of(user));
+        Mockito.when(refreshTokenRepository.findByUserInfo(Mockito.any(UserInfo.class)))
+                .thenReturn(Optional.of(refreshToken));
+        // WHEN
+        this.authService.logout(user.getEmail());
+        // THEN
+        Mockito.verify(refreshTokenRepository).delete(refreshToken);
+    }
+
+    @Test
+    void shouldFailLogoutWhenRefreshTokenNotFound(){
+        // GIVEN
+        UserInfo user = UserInfo.builder()
+                .id(1L)
+                .fullName("Name")
+                .email("email@test.com")
+                .password("encodedPassword")
+                .createdAt(LocalDateTime.now())
+                .roles(Set.of(new Role(1L,"USER_ROLE")))
+                .build();
+        Mockito.when(userInfoRepository.findByEmailWithRoles(Mockito.anyString()))
+                .thenReturn(Optional.of(user));
+        Mockito.when(refreshTokenRepository.findByUserInfo(Mockito.any(UserInfo.class)))
+                .thenThrow(new InvalidRefreshTokenException("Invalid Refresh Token"));
+
+        // WHEN + THEN
+        InvalidRefreshTokenException exception = Assertions.assertThrows(
+                InvalidRefreshTokenException.class,
+                () -> this.authService.logout(user.getEmail())
+        );
+
+        // THEN
+        Assertions.assertEquals("Invalid Refresh Token" , exception.getMessage());
+        Mockito.verify(refreshTokenRepository, Mockito.never()).delete(Mockito.any(RefreshToken.class));
     }
 }

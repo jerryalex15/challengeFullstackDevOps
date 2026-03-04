@@ -19,6 +19,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.time.LocalDateTime;
 import java.util.Set;
@@ -28,7 +29,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
-@AutoConfigureMockMvc(addFilters = false)
+@AutoConfigureMockMvc(addFilters = true)
 @Transactional
 class AuthControllerIntegrationTest extends DatabaseInstanceTest {
 
@@ -55,6 +56,9 @@ class AuthControllerIntegrationTest extends DatabaseInstanceTest {
 
     @Autowired
     private AuthService authService;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     private UserInfo user;
 
@@ -147,5 +151,35 @@ class AuthControllerIntegrationTest extends DatabaseInstanceTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void shouldLogoutSuccessfully() throws Exception {
+
+        // 1. Login pour obtenir un vrai access token (crée automatiquement le refresh token)
+        String loginBody = """
+            {
+                "email": "test@gmail.com",
+                "password": "password"
+            }
+            """;
+
+        String loginResponse = mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(loginBody))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        String accessToken = new ObjectMapper()
+                .readTree(loginResponse)
+                .get("accessToken")
+                .asText();
+
+        // 2. Logout avec le vrai token
+        mockMvc.perform(post("/api/auth/logout")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isNoContent());
     }
 }
