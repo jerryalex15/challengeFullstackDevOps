@@ -57,6 +57,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/user/**").hasAuthority("ROLE_USER")
                         .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
+                        .requestMatchers("/actuator/health").permitAll()
                         .anyRequest().authenticated())
                 // Stateless session (required for JWT)
                 .sessionManagement(session ->
