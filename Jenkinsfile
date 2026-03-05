@@ -89,7 +89,7 @@ pipeline {
                     string(credentialsId: 'Oracle-vm-ip', variable: 'VM_IP')
                 ]) {
                     sshagent(credentials: ['oracle-vm-ssh']) {
-                        sh '''
+                        sh """
                         ssh -o StrictHostKeyChecking=no opc@$VM_IP << EOF
 
                         docker pull nandraina/challenge-springboot:latest
@@ -100,7 +100,7 @@ pipeline {
                         docker compose up -d
 
                         EOF
-                        '''
+                        """
                     }
                 }
             }
