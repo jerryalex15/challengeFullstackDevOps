@@ -37,15 +37,26 @@ pipeline {
 
         stage('Sonar Analysis') {
             environment {
-                SONAR_HOST_URL = 'http://sonarqube:9000'
-                SONAR_LOGIN = credentials('SonarQube-token')
+                SONAR_HOST_URL = 'https://sonarcloud.io'
+                SONAR_TOKEN = credentials('sonar-token')
             }
             steps {
                 sh """
-                mvn sonar:sonar \
-                  -Dsonar.host.url=$SONAR_HOST_URL \
-                  -Dsonar.login=$SONAR_LOGIN
+                mvn verify sonar:sonar \
+                  -Dsonar.projectKey=jerryalex15_challengeFullstackDevOps \
+                  -Dsonar.organization=jerryalex15 \
+                  -Dsonar.host.url=https://sonarcloud.io \
+                  -Dsonar.login=$SONAR_TOKEN \
+                  -Dsonar.branch.name=develop
                 """
+            }
+        }
+
+        stage("Quality Gate") {
+            steps {
+                timeout(time: 2, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
             }
         }
 
