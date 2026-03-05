@@ -81,22 +81,27 @@ pipeline {
         stage('Deploy to Oracle VM') {
             steps {
                 withCredentials([
+                    string(credentialsId: 'Oracle-vm-ip', variable: 'VM_IP'),
                     file(credentialsId: 'jenkins-private-key-file', variable: 'PRIVATE_KEY_FILE'),
                     file(credentialsId: 'jenkins-public-key-file', variable: 'PUBLIC_KEY_FILE')
                 ]) {
                     sshagent(credentials: ['oracle-vm-ssh']) {
                         sh '''
-                            # Crée un dossier temporaire sur la VM pour les clés
-                            ssh -o StrictHostKeyChecking=no opc@$VM_IP 'mkdir -p /home/opc/challengeFullstackDevOps/secrets'
+                            # Crée le dossier secrets sur la VM
+                            ssh -o StrictHostKeyChecking=no opc@$VM_IP \
+                                'mkdir -p /home/opc/challengeFullstackDevOps/secrets'
 
                             # Copie les clés sur la VM
-                            scp -o StrictHostKeyChecking=no $PRIVATE_KEY_FILE opc@$VM_IP:/home/opc/challengeFullstackDevOps/secrets/private_key.pem
-                            scp -o StrictHostKeyChecking=no $PUBLIC_KEY_FILE opc@$VM_IP:/home/opc/challengeFullstackDevOps/secrets/public_key.pem
+                            scp -o StrictHostKeyChecking=no $PRIVATE_KEY_FILE \
+                                opc@$VM_IP:/home/opc/challengeFullstackDevOps/secrets/private_key.pem
+                            scp -o StrictHostKeyChecking=no $PUBLIC_KEY_FILE \
+                                opc@$VM_IP:/home/opc/challengeFullstackDevOps/secrets/public_key.pem
 
                             # Copie docker-compose
-                            scp -o StrictHostKeyChecking=no docker-compose.yml opc@$VM_IP:/home/opc/challengeFullstackDevOps/
+                            scp -o StrictHostKeyChecking=no docker-compose.yml \
+                                opc@$VM_IP:/home/opc/challengeFullstackDevOps/
 
-                            # Lance Docker Compose avec les chemins des clés
+                            # Lance Docker Compose
                             ssh -o StrictHostKeyChecking=no opc@$VM_IP '
                                 cd /home/opc/challengeFullstackDevOps
                                 export JWT_PRIVATE_KEY_PATH=/home/opc/challengeFullstackDevOps/secrets/private_key.pem
