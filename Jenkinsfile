@@ -36,26 +36,25 @@ pipeline {
         }
 
         stage('Sonar Analysis') {
-            environment {
-                // On définit la variable d'environnement via les credentials
-                SONAR_AUTH_TOKEN = credentials('sonar-token')
-            }
             steps {
-                // Utilisation de guillemets simples pour éviter l'interpolation Groovy
-                sh '''
-                mvn verify sonar:sonar \
-                  -Dsonar.projectKey=jerryalex15_challengeFullstackDevOps \
-                  -Dsonar.organization=jerryalex15 \
-                  -Dsonar.host.url=https://sonarcloud.io \
-                  -Dsonar.login=$SONAR_AUTH_TOKEN \
-                  -Dsonar.branch.name=develop
-                '''
+                withSonarQubeEnv('SonarCloud') {
+                    withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_AUTH_TOKEN')]) {
+                        sh '''
+                        mvn verify sonar:sonar \
+                          -Dsonar.projectKey=jerryalex15_challengeFullstackDevOps \
+                          -Dsonar.organization=jerryalex15 \
+                          -Dsonar.host.url=https://sonarcloud.io \
+                          -Dsonar.token=$SONAR_AUTH_TOKEN \
+                          -Dsonar.branch.name=develop
+                        '''
+                    }
+                }
             }
         }
 
         stage("Quality Gate") {
             steps {
-                timeout(time: 2, unit: 'MINUTES') {
+                timeout(time: 5, unit: 'MINUTES') {
                     waitForQualityGate abortPipeline: true
                 }
             }
