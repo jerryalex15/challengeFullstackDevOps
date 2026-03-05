@@ -88,12 +88,18 @@ pipeline {
                 withCredentials([string(credentialsId: 'Oracle-vm-ip', variable: 'DEPLOY_IP')]) {
                     sshagent(credentials: ['oracle-vm-ssh']) {
                         sh """
-                        ssh -o StrictHostKeyChecking=no opc@\$DEPLOY_IP << EOF
+                        # Utilisation de l'IP injectée par Jenkins
+                        ssh -o StrictHostKeyChecking=no opc@${DEPLOY_IP} << 'EOF'
 
-                        docker pull nandraina/challenge-springboot:latest
-
+                        # Crée le dossier s'il n'existe pas
+                        mkdir -p /home/opc/challengeFullstackDevOps
                         cd /home/opc/challengeFullstackDevOps
 
+                        # Récupère la dernière image
+                        docker pull nandraina/challenge-springboot:latest
+
+                        # Relance les services
+                        # Note : Assure-toi que ton docker-compose.yml est déjà présent dans ce dossier
                         docker compose down
                         docker compose up -d
 
