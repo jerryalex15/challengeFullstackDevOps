@@ -83,5 +83,27 @@ pipeline {
                 }
             }
         }
+        stage('Deploy to Oracle VM') {
+            steps {
+                withCredentials([
+                    string(credentialsId: 'Oracle-vm-ip', variable: 'VM_IP')
+                ]) {
+                    sshagent(credentials: ['oracle-vm-ssh']) {
+                        sh '''
+                        ssh -o StrictHostKeyChecking=no opc@$VM_IP << EOF
+
+                        docker pull nandraina/challenge-springboot:latest
+
+                        cd /home/opc/challengeFullstackDevOps
+
+                        docker compose down
+                        docker compose up -d
+
+                        EOF
+                        '''
+                    }
+                }
+            }
+        }
     }
 }
