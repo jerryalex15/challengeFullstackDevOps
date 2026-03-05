@@ -3,10 +3,7 @@ services:
     image: postgres:15
     container_name: auth-postgres
     restart: unless-stopped
-    env_file:
-      - .env
     environment:
-      POSTGRES_URL: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
