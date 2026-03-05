@@ -37,18 +37,19 @@ pipeline {
 
         stage('Sonar Analysis') {
             environment {
-                SONAR_HOST_URL = 'https://sonarcloud.io'
-                SONAR_TOKEN = credentials('sonar-token')
+                // On définit la variable d'environnement via les credentials
+                SONAR_AUTH_TOKEN = credentials('sonar-token')
             }
             steps {
-                sh """
+                // Utilisation de guillemets simples pour éviter l'interpolation Groovy
+                sh '''
                 mvn verify sonar:sonar \
                   -Dsonar.projectKey=jerryalex15_challengeFullstackDevOps \
                   -Dsonar.organization=jerryalex15 \
                   -Dsonar.host.url=https://sonarcloud.io \
-                  -Dsonar.login=$SONAR_TOKEN \
+                  -Dsonar.login=$SONAR_AUTH_TOKEN \
                   -Dsonar.branch.name=develop
-                """
+                '''
             }
         }
 
