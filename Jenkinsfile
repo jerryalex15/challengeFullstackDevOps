@@ -85,20 +85,24 @@ pipeline {
         }
         stage('Deploy to Oracle VM') {
             steps {
-                withCredentials([string(credentialsId: 'Oracle-vm-ip', variable: 'DEPLOY_IP')]) {
+                // 'variable' est le nom interne Jenkins, on l'utilise directement dans le SH
+                withCredentials([string(credentialsId: 'Oracle-vm-ip', variable: 'VM_IP')]) {
                     sshagent(credentials: ['oracle-vm-ssh']) {
-                        sh """
-                        ssh -o StrictHostKeyChecking=no opc@${DEPLOY_IP} << 'EOF'
-                            mkdir -p /home/opc/challengeFullstackDevOps
-                            cd /home/opc/challengeFullstackDevOps
+                        sh '''
+                            # Ici on utilise des guillemets simples pour le bloc SH
+                            # pour que ce soit le shell qui lise la variable d'environnement
 
-                            docker pull nandraina/challenge-springboot:latest
+                            ssh -o StrictHostKeyChecking=no opc@${VM_IP} << 'EOF'
+                                mkdir -p /home/opc/challengeFullstackDevOps
+                                cd /home/opc/challengeFullstackDevOps
 
-                            # On ignore l'erreur si rien n'est lancé avec '|| true'
-                            docker compose down || true
-                            docker compose up -d
-                        EOF
-                        """
+                                docker pull nandraina/challenge-springboot:latest
+
+                                # Le "|| true" évite que le pipeline plante si c'est le premier déploiement
+                                docker compose down || true
+                                docker compose up -d
+                            EOF
+                        '''
                     }
                 }
             }
