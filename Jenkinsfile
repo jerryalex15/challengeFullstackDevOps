@@ -88,13 +88,14 @@ pipeline {
                 withCredentials([string(credentialsId: 'Oracle-vm-ip', variable: 'VM_IP')]) {
                     sshagent(credentials: ['oracle-vm-ssh']) {
                         sh '''
-                            ssh -o StrictHostKeyChecking=no opc@$VM_IP << EOF
-                                mkdir -p /home/opc/challengeFullstackDevOps
+                            scp -o StrictHostKeyChecking=no docker-compose.yml opc@$VM_IP:/home/opc/challengeFullstackDevOps/
+
+                            ssh -o StrictHostKeyChecking=no opc@$VM_IP '
                                 cd /home/opc/challengeFullstackDevOps
                                 docker pull nandraina/challenge-springboot:latest
                                 docker compose down || true
                                 docker compose up -d
-                            EOF
+                            '
                         '''
                     }
                 }
