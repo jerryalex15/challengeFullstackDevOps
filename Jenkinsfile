@@ -85,7 +85,7 @@ pipeline {
         }
         stage('Deploy to Oracle VM') {
             steps {
-                withCredentials([string(credentialsId: 'oracle-vm-ip', variable: 'DEPLOY_IP')]) {
+                withCredentials([string(credentialsId: 'Oracle-vm-ip', variable: 'DEPLOY_IP')]) {
                     sshagent(credentials: ['oracle-vm-ssh']) {
                         sh """
                         ssh -o StrictHostKeyChecking=no opc@\$DEPLOY_IP << EOF
