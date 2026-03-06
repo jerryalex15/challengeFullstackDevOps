@@ -88,14 +88,9 @@ pipeline {
                 ]) {
                     sshagent(credentials: ['oracle-vm-ssh']) {
                         sh """
-                            # Diagnostic complet
-                            ssh -o StrictHostKeyChecking=no opc@\$VM_IP 'ls -la /home/opc/challengeFullstackDevOps/secrets/'
-                            ssh -o StrictHostKeyChecking=no opc@\$VM_IP 'whoami'
-
-                            # Force la suppression des anciens fichiers et recrée proprement
-                            ssh -o StrictHostKeyChecking=no opc@\$VM_IP 'sudo rm -f /home/opc/challengeFullstackDevOps/secrets/private_key.pem'
-                            ssh -o StrictHostKeyChecking=no opc@\$VM_IP 'sudo rm -f /home/opc/challengeFullstackDevOps/secrets/public_key.pem'
-                            ssh -o StrictHostKeyChecking=no opc@\$VM_IP 'sudo chown -R opc:opc /home/opc/challengeFullstackDevOps/secrets'
+                            # Prépare le dossier
+                            ssh -o StrictHostKeyChecking=no opc@\$VM_IP 'sudo rm -f /home/opc/challengeFullstackDevOps/secrets/*.pem'
+                            ssh -o StrictHostKeyChecking=no opc@\$VM_IP 'chmod 755 /home/opc/challengeFullstackDevOps/secrets'
 
                             # Copie les clés
                             scp -o StrictHostKeyChecking=no \$PRIVATE_KEY_FILE \
@@ -103,19 +98,16 @@ pipeline {
                             scp -o StrictHostKeyChecking=no \$PUBLIC_KEY_FILE \
                                 opc@\$VM_IP:/home/opc/challengeFullstackDevOps/secrets/public_key.pem
 
-                            # Sécurise
-                            ssh -o StrictHostKeyChecking=no opc@\$VM_IP 'chmod 700 /home/opc/challengeFullstackDevOps/secrets'
-                            ssh -o StrictHostKeyChecking=no opc@\$VM_IP 'chmod 600 /home/opc/challengeFullstackDevOps/secrets/*.pem'
+                            # Sécurise les fichiers, dossier lisible par Docker
+                            ssh -o StrictHostKeyChecking=no opc@\$VM_IP 'chmod 644 /home/opc/challengeFullstackDevOps/secrets/*.pem'
 
                             # Copie docker-compose
                             scp -o StrictHostKeyChecking=no docker-compose.yml \
-                                opc@\$VM_IP:/home/opc/challengeFullstackDevOps/
+                                opc@\$VM_IP:/home/opc/challengeFullstackDevOps/docker-compose.yml
 
-                            # Lance Docker Compose
+                            # Lance
                             ssh -o StrictHostKeyChecking=no opc@\$VM_IP '
                                 cd /home/opc/challengeFullstackDevOps
-                                export JWT_PRIVATE_KEY_PATH=/home/opc/challengeFullstackDevOps/secrets/private_key.pem
-                                export JWT_PUBLIC_KEY_PATH=/home/opc/challengeFullstackDevOps/secrets/public_key.pem
                                 docker pull nandraina/challenge-springboot:latest
                                 docker compose down || true
                                 docker compose up -d
