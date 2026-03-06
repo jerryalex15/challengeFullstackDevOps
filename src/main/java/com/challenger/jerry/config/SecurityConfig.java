@@ -44,12 +44,9 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                // CORS TOUJOURS EN PREMIER (très important)
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                // Disable CSRF (not needed for stateless JWT)
-                .csrf(AbstractHttpConfigurer::disable)
-                // Configure endpoint authorization
-                .authorizeHttpRequests(auth -> auth
+                .cors(cors -> cors.configurationSource(corsConfigurationSource())) // CORS TOUJOURS EN PREMIER (très important)
+                .csrf(AbstractHttpConfigurer::disable) // Disable CSRF (not needed for stateless JWT)
+                .authorizeHttpRequests(auth -> auth // Configure endpoint authorization
                         // OPTIONS should always be allowed
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         // Public endpoints
@@ -105,7 +102,7 @@ public class SecurityConfig {
         CorsConfiguration config = new CorsConfiguration();
 
         config.setAllowedOriginPatterns(List.of("http://localhost:4200"));
-        config.setAllowedMethods(List.of("*"));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         config.setAllowedHeaders(List.of("*"));
         config.setExposedHeaders(List.of("Authorization"));
         config.setAllowCredentials(true); // IMPORTANT si JWT + cookies

@@ -31,6 +31,11 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,  FilterChain filterChain) throws ServletException, IOException {
+        if (request.getMethod().equalsIgnoreCase("OPTIONS")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         String path = request.getServletPath();
         // Only skip JWT for public auth endpoints, not logout
         if (path.startsWith("/api/auth/") && !path.equals("/api/auth/logout")) {
