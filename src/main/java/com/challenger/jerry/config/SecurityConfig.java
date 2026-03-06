@@ -45,7 +45,7 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource())) // CORS TOUJOURS EN PREMIER (très important)
-                .csrf(AbstractHttpConfigurer::disable) // Disable CSRF (not needed for stateless JWT)
+                .csrf(AbstractHttpConfigurer::disable) //NOSONAR
                 .authorizeHttpRequests(auth -> auth // Configure endpoint authorization
                         // OPTIONS should always be allowed
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
