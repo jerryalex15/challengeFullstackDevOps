@@ -88,37 +88,38 @@ pipeline {
                 ]) {
                     sshagent(credentials: ['oracle-vm-ssh']) {
                         sh """
-                           # 1. Crée le dossier - TOUT dans les quotes SSH
-                           ssh -o StrictHostKeyChecking=no opc@\$VM_IP 'mkdir -p /home/opc/challengeFullstackDevOps/secrets'
-                           ssh -o StrictHostKeyChecking=no opc@\$VM_IP 'sudo chown -R opc:opc /home/opc/challengeFullstackDevOps'
-                           ssh -o StrictHostKeyChecking=no opc@\$VM_IP 'chmod 755 /home/opc/challengeFullstackDevOps/secrets'
+                            # Diagnostic complet
+                            ssh -o StrictHostKeyChecking=no opc@\$VM_IP 'ls -la /home/opc/challengeFullstackDevOps/secrets/'
+                            ssh -o StrictHostKeyChecking=no opc@\$VM_IP 'whoami'
 
-                           # DEBUG - vérifie que le dossier existe avec les bonnes permissions
-                           ssh -o StrictHostKeyChecking=no opc@\$VM_IP 'ls -la /home/opc/challengeFullstackDevOps/'
+                            # Force la suppression des anciens fichiers et recrée proprement
+                            ssh -o StrictHostKeyChecking=no opc@\$VM_IP 'sudo rm -f /home/opc/challengeFullstackDevOps/secrets/private_key.pem'
+                            ssh -o StrictHostKeyChecking=no opc@\$VM_IP 'sudo rm -f /home/opc/challengeFullstackDevOps/secrets/public_key.pem'
+                            ssh -o StrictHostKeyChecking=no opc@\$VM_IP 'sudo chown -R opc:opc /home/opc/challengeFullstackDevOps/secrets'
 
-                           # 2. Copie les clés
-                           scp -o StrictHostKeyChecking=no \$PRIVATE_KEY_FILE \
-                               opc@\$VM_IP:/home/opc/challengeFullstackDevOps/secrets/private_key.pem
-                           scp -o StrictHostKeyChecking=no \$PUBLIC_KEY_FILE \
-                               opc@\$VM_IP:/home/opc/challengeFullstackDevOps/secrets/public_key.pem
+                            # Copie les clés
+                            scp -o StrictHostKeyChecking=no \$PRIVATE_KEY_FILE \
+                                opc@\$VM_IP:/home/opc/challengeFullstackDevOps/secrets/private_key.pem
+                            scp -o StrictHostKeyChecking=no \$PUBLIC_KEY_FILE \
+                                opc@\$VM_IP:/home/opc/challengeFullstackDevOps/secrets/public_key.pem
 
-                           # 3. Restreint les permissions APRÈS la copie
-                           ssh -o StrictHostKeyChecking=no opc@\$VM_IP 'chmod 700 /home/opc/challengeFullstackDevOps/secrets'
-                           ssh -o StrictHostKeyChecking=no opc@\$VM_IP 'chmod 600 /home/opc/challengeFullstackDevOps/secrets/*.pem'
+                            # Sécurise
+                            ssh -o StrictHostKeyChecking=no opc@\$VM_IP 'chmod 700 /home/opc/challengeFullstackDevOps/secrets'
+                            ssh -o StrictHostKeyChecking=no opc@\$VM_IP 'chmod 600 /home/opc/challengeFullstackDevOps/secrets/*.pem'
 
-                           # 4. Copie docker-compose
-                           scp -o StrictHostKeyChecking=no docker-compose.yml \
-                               opc@\$VM_IP:/home/opc/challengeFullstackDevOps/
+                            # Copie docker-compose
+                            scp -o StrictHostKeyChecking=no docker-compose.yml \
+                                opc@\$VM_IP:/home/opc/challengeFullstackDevOps/
 
-                           # 5. Lance Docker Compose
-                           ssh -o StrictHostKeyChecking=no opc@\$VM_IP '
-                               cd /home/opc/challengeFullstackDevOps
-                               export JWT_PRIVATE_KEY_PATH=/home/opc/challengeFullstackDevOps/secrets/private_key.pem
-                               export JWT_PUBLIC_KEY_PATH=/home/opc/challengeFullstackDevOps/secrets/public_key.pem
-                               docker pull nandraina/challenge-springboot:latest
-                               docker compose down || true
-                               docker compose up -d
-                           '
+                            # Lance Docker Compose
+                            ssh -o StrictHostKeyChecking=no opc@\$VM_IP '
+                                cd /home/opc/challengeFullstackDevOps
+                                export JWT_PRIVATE_KEY_PATH=/home/opc/challengeFullstackDevOps/secrets/private_key.pem
+                                export JWT_PUBLIC_KEY_PATH=/home/opc/challengeFullstackDevOps/secrets/public_key.pem
+                                docker pull nandraina/challenge-springboot:latest
+                                docker compose down || true
+                                docker compose up -d
+                            '
                         """
                     }
                 }
