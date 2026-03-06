@@ -1,7 +1,6 @@
 package com.challenger.jerry.controller;
 
 import com.challenger.jerry.dto.*;
-import com.challenger.jerry.entity.UserInfo;
 import com.challenger.jerry.exception.InvalidRefreshTokenException;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,8 +14,6 @@ import org.springframework.web.bind.annotation.*;
 import com.challenger.jerry.repository.RefreshTokenRepository;
 import com.challenger.jerry.service.AuthService;
 import com.challenger.jerry.service.JwtService;
-
-import java.util.HashMap;
 
 @RestController
 @RequestMapping("api/auth")
