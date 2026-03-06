@@ -88,9 +88,9 @@ pipeline {
                 ]) {
                     sshagent(credentials: ['oracle-vm-ssh']) {
                         sh '''
-                            # Crée le dossier secrets sur la VM
+                             # Crée le dossier et force les permissions
                             ssh -o StrictHostKeyChecking=no opc@$VM_IP \
-                                'mkdir -p /home/opc/challengeFullstackDevOps/secrets'
+                                'mkdir -p /home/opc/challengeFullstackDevOps/secrets && sudo chown -R opc:opc /home/opc/challengeFullstackDevOps/secrets && chmod 700 /home/opc/challengeFullstackDevOps/secrets'
 
                             # Copie les clés sur la VM
                             scp -o StrictHostKeyChecking=no $PRIVATE_KEY_FILE \
