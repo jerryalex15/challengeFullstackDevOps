@@ -45,7 +45,7 @@ pipeline {
                           -Dsonar.organization=jerryalex15 \
                           -Dsonar.host.url=https://sonarcloud.io \
                           -Dsonar.token=$SONAR_AUTH_TOKEN \
-                          -Dsonar.branch.name=develop
+                          -Dsonar.branch.name=develop \
                           -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
                         '''
                     }
