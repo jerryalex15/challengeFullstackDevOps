@@ -87,23 +87,23 @@ pipeline {
                     file(credentialsId: 'jenkins-public-key-file', variable: 'PUBLIC_KEY_FILE')
                 ]) {
                     sshagent(credentials: ['oracle-vm-ssh']) {
-                        sh '''
-                             # Crée le dossier et force les permissions
-                            ssh -o StrictHostKeyChecking=no opc@$VM_IP \
+                        sh """
+                            # Crée le dossier et force les permissions
+                            ssh -o StrictHostKeyChecking=no opc@\$VM_IP \
                                 'mkdir -p /home/opc/challengeFullstackDevOps/secrets && sudo chown -R opc:opc /home/opc/challengeFullstackDevOps/secrets && chmod 700 /home/opc/challengeFullstackDevOps/secrets'
 
                             # Copie les clés sur la VM
-                            scp -o StrictHostKeyChecking=no $PRIVATE_KEY_FILE \
-                                opc@$VM_IP:/home/opc/challengeFullstackDevOps/secrets/private_key.pem
-                            scp -o StrictHostKeyChecking=no $PUBLIC_KEY_FILE \
-                                opc@$VM_IP:/home/opc/challengeFullstackDevOps/secrets/public_key.pem
+                            scp -o StrictHostKeyChecking=no \$PRIVATE_KEY_FILE \
+                                opc@\$VM_IP:/home/opc/challengeFullstackDevOps/secrets/private_key.pem
+                            scp -o StrictHostKeyChecking=no \$PUBLIC_KEY_FILE \
+                                opc@\$VM_IP:/home/opc/challengeFullstackDevOps/secrets/public_key.pem
 
                             # Copie docker-compose
                             scp -o StrictHostKeyChecking=no docker-compose.yml \
-                                opc@$VM_IP:/home/opc/challengeFullstackDevOps/
+                                opc@\$VM_IP:/home/opc/challengeFullstackDevOps/
 
                             # Lance Docker Compose
-                            ssh -o StrictHostKeyChecking=no opc@$VM_IP '
+                            ssh -o StrictHostKeyChecking=no opc@\$VM_IP '
                                 cd /home/opc/challengeFullstackDevOps
                                 export JWT_PRIVATE_KEY_PATH=/home/opc/challengeFullstackDevOps/secrets/private_key.pem
                                 export JWT_PUBLIC_KEY_PATH=/home/opc/challengeFullstackDevOps/secrets/public_key.pem
@@ -111,7 +111,7 @@ pipeline {
                                 docker compose down || true
                                 docker compose up -d
                             '
-                        '''
+                        """
                     }
                 }
             }
