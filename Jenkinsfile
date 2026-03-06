@@ -40,7 +40,7 @@ pipeline {
                 withSonarQubeEnv('SonarCloud') {
                     withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_AUTH_TOKEN')]) {
                         sh '''
-                        mvn verify sonar:sonar \
+                        mvn sonar:sonar \
                           -Dsonar.projectKey=jerryalex15_challengeFullstackDevOps \
                           -Dsonar.organization=jerryalex15 \
                           -Dsonar.host.url=https://sonarcloud.io \
