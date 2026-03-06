@@ -11,11 +11,13 @@ pipeline {
         // IMPORTANT pour macOS + Testcontainers
         TESTCONTAINERS_HOST_OVERRIDE = "host.docker.internal"
     }
-
     stages {
+        stage('Clean Workspace') {
+            steps { cleanWs() }
+        }
+
         stage('Checkout') {
             steps {
-                deleteDir() // supprime le workspace
                 git branch: 'develop',
                     url: 'https://github.com/jerryalex15/challengeFullstackDevOps.git',
                     credentialsId: 'github-token-id'
@@ -55,8 +57,8 @@ pipeline {
 
         stage("Quality Gate") {
             steps {
-                timeout(time: 15, unit: 'MINUTES') {
-                    waitForQualityGate abortPipeline: true
+                timeout(time: 10, unit: 'MINUTES') {
+                    retry(2) { waitForQualityGate abortPipeline: true }
                 }
             }
         }
