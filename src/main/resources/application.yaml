@@ -13,20 +13,24 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: ${JPA_DDL_AUTO:update}
+      ddl-auto: ${JPA_DDL_AUTO:validate}
     open-in-view: false
     show-sql: ${JPA_SHOW_SQL:false}
     properties:
       hibernate:
         format_sql: true
+    flyway:
+      enabled: true
+
 
 # ===============================
 # JWT CONFIGURATION
 # ===============================
 jwt:
-  secret: ${JWT_SECRET}
-  access-token-expiration: ${JWT_ACCESS_EXPIRATION:1800000}     # 30 min
-  refresh-token-expiration: ${JWT_REFRESH_EXPIRATION:604800000} # 7 jours
+  access-expiration: 900000   # 15mn
+  refresh-expiration: 604800000   # 7jrs
+  private-key-path: ${PRIVATE_KEY_PATH:}   # variable d'env Jenkins
+  public-key-path: ${PUBLIC_KEY_PATH:}     # variable d'env Jenkins
 
 logging:
   level:

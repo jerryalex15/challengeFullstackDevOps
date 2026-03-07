@@ -1,14 +1,17 @@
 services:
+
   postgres:
     image: postgres:15
-    container_name: auth-postgres
+    container_name: auth-postgres-dev
     restart: unless-stopped
+    env_file:
+      - .env
     environment:
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - pgdata-dev:/var/lib/postgresql/data
     ports:
       - "5433:5432"
     healthcheck:
@@ -18,21 +21,22 @@ services:
       retries: 5
 
   api:
-    image: nandraina/challenge-springboot:latest
-    container_name: auth-api
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: auth-api-dev
     restart: unless-stopped
     depends_on:
       postgres:
         condition: service_healthy
     env_file:
       - .env
-    environment:
-      PRIVATE_KEY_PATH: /secrets/private_key.pem
-      PUBLIC_KEY_PATH: /secrets/public_key.pem
-    volumes:
-      - /home/opc/challengeFullstackDevOps/secrets:/secrets:ro
     ports:
       - "${SERVER_PORT}:${SERVER_PORT}"
 
+    volumes:
+      - .:/app
+      - ~/.m2:/root/.m2
+
 volumes:
-  pgdata:
+  pgdata-dev:
