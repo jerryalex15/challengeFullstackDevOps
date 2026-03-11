@@ -7,8 +7,6 @@ pipeline {
         DOCKER_TAG = "latest"
         PRIVATE_KEY_PATH = credentials('jenkins-private-key-file')
         PUBLIC_KEY_PATH  = credentials('jenkins-public-key-file')
-        TESTCONTAINERS_RYUK_DISABLED=true
-        TESTCONTAINERS_HOST_OVERRIDE = "host.docker.internal"
     }
     stages {
 
