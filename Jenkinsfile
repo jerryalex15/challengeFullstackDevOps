@@ -11,10 +11,6 @@ pipeline {
         TESTCONTAINERS_HOST_OVERRIDE = "host.docker.internal"
     }
     stages {
-        stage('Clean Workspace') {
-            agent { label 'local-machine-agent' }
-            steps { cleanWs() }
-        }
 
         stage('Checkout') {
             agent { label 'local-machine-agent' }
@@ -127,7 +123,7 @@ pipeline {
     post {
         always {
             node('local-machine-agent') {
-                cleanWs()
+                sh 'rm -f secrets/*.pem || true'
             }
         }
     }
