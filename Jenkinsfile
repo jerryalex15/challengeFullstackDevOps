@@ -8,6 +8,7 @@ pipeline {
         TESTCONTAINERS_RYUK_DISABLED=true
         TESTCONTAINERS_HOST_OVERRIDE = "host.docker.internal"
     }
+
     stages {
         stage('Clean Workspace') {
             agent { label 'local-machine-agent' }
