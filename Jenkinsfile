@@ -5,8 +5,6 @@ pipeline {
         DOCKER_REGISTRY = "docker.io"
         DOCKER_IMAGE = "nandraina/challenge-springboot"
         DOCKER_TAG = "latest"
-        PRIVATE_KEY_PATH = credentials('jenkins-private-key-file')
-        PUBLIC_KEY_PATH  = credentials('jenkins-public-key-file')
         TESTCONTAINERS_RYUK_DISABLED=true
         TESTCONTAINERS_HOST_OVERRIDE = "host.docker.internal"
     }
@@ -109,7 +107,6 @@ pipeline {
 
                             scp -o StrictHostKeyChecking=no docker-compose.yml \
                                 opc@\$VM_IP:/home/opc/challengeFullstackDevOps/docker-compose.yml
- d
                             ssh -o StrictHostKeyChecking=no opc@\$VM_IP '
                                 cd /home/opc/challengeFullstackDevOps
                                 docker pull nandraina/challenge-springboot:latest
