@@ -92,38 +92,36 @@ pipeline {
                     file(credentialsId: 'jenkins-private-key-file', variable: 'PRIVATE_KEY_FILE'),
                     file(credentialsId: 'jenkins-public-key-file', variable: 'PUBLIC_KEY_FILE')
                 ]) {
-                    sshagent(credentials: ['oracle-vm-ssh']) {
-                        sh """
-                            # ── 1. Copie atomique des clés (.new d'abord) ──────────────────
-                            scp \$SSH_OPTS \$PRIVATE_KEY_FILE \
-                                \$REMOTE_USER@\$VM_IP:\$SECRETS_DIR/private_key.pem.new
+                    sh """
+                        # ── 1. Copie atomique des clés (.new d'abord) ──────────────────
+                        scp \$SSH_OPTS \$PRIVATE_KEY_FILE \
+                            \$REMOTE_USER@\$VM_IP:\$SECRETS_DIR/private_key.pem.new
 
-                            scp \$SSH_OPTS \$PUBLIC_KEY_FILE \
-                                \$REMOTE_USER@\$VM_IP:\$SECRETS_DIR/public_key.pem.new
+                        scp \$SSH_OPTS \$PUBLIC_KEY_FILE \
+                            \$REMOTE_USER@\$VM_IP:\$SECRETS_DIR/public_key.pem.new
 
-                            # ── 2. Remplacement + permissions ─────────────────────────────
-                            ssh \$SSH_OPTS \$REMOTE_USER@\$VM_IP '
-                                cd \$SECRETS_DIR
-                                mv private_key.pem.new private_key.pem
-                                mv public_key.pem.new public_key.pem
-                                chmod 644 \$SECRETS_DIR/*.pem
-                            '
+                        # ── 2. Remplacement + permissions ─────────────────────────────
+                        ssh \$SSH_OPTS \$REMOTE_USER@\$VM_IP '
+                            cd \$SECRETS_DIR
+                            mv private_key.pem.new private_key.pem
+                            mv public_key.pem.new public_key.pem
+                            chmod 644 \$SECRETS_DIR/*.pem
+                        '
 
-                            # ── 3. Envoi du docker-compose ────────────────────────────────
-                            scp \$SSH_OPTS docker-compose.yml \
-                                \$REMOTE_USER@\$VM_IP:\$DEPLOY_DIR/docker-compose.yml
+                        # ── 3. Envoi du docker-compose ────────────────────────────────
+                        scp \$SSH_OPTS docker-compose.yml \
+                            \$REMOTE_USER@\$VM_IP:\$DEPLOY_DIR/docker-compose.yml
 
-                            # ── 4. Pull + restart + health check ──────────────────────────
-                            ssh \$SSH_OPTS \$REMOTE_USER@\$VM_IP '
-                                cd \$DEPLOY_DIR
-                                docker pull \$DOCKER_IMAGE:\$DOCKER_TAG
-                                docker compose down
-                                docker compose up -d
-                                sleep 10
-                                docker compose ps | grep -q "Up" || exit 1
-                            '
-                        """
-                    }
+                        # ── 4. Pull + restart + health check ──────────────────────────
+                        ssh \$SSH_OPTS \$REMOTE_USER@\$VM_IP '
+                            cd \$DEPLOY_DIR
+                            docker pull \$DOCKER_IMAGE:\$DOCKER_TAG
+                            docker compose down
+                            docker compose up -d
+                            sleep 10
+                            docker compose ps | grep -q "Up" || exit 1
+                        '
+                    """
                 }
             }
         }
