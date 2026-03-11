@@ -93,14 +93,18 @@ pipeline {
                     file(credentialsId: 'jenkins-public-key-file', variable: 'PUBLIC_KEY_FILE')
                 ]) {
                     sh """
-                        # ── 1. Copie atomique des clés (.new d'abord) ──────────────────
+                        # ── 0. Définition des variables
+                        chmod 600 \$PRIVATE_KEY_FILE
+                        SSH_OPTS="-i \$PRIVATE_KEY_FILE -o StrictHostKeyChecking=no"
+
+                        # ── 1. Copie atomique des clés (.new d'abord)
                         scp \$SSH_OPTS \$PRIVATE_KEY_FILE \
                             \$REMOTE_USER@\$VM_IP:\$SECRETS_DIR/private_key.pem.new
 
                         scp \$SSH_OPTS \$PUBLIC_KEY_FILE \
                             \$REMOTE_USER@\$VM_IP:\$SECRETS_DIR/public_key.pem.new
 
-                        # ── 2. Remplacement + permissions ─────────────────────────────
+                        # ── 2. Remplacement + permissions
                         ssh \$SSH_OPTS \$REMOTE_USER@\$VM_IP '
                             cd \$SECRETS_DIR
                             mv private_key.pem.new private_key.pem
@@ -108,7 +112,7 @@ pipeline {
                             chmod 644 \$SECRETS_DIR/*.pem
                         '
 
-                        # ── 3. Envoi du docker-compose ────────────────────────────────
+                        # ── 3. Envoi du docker-compose
                         scp \$SSH_OPTS docker-compose.yml \
                             \$REMOTE_USER@\$VM_IP:\$DEPLOY_DIR/docker-compose.yml
 
