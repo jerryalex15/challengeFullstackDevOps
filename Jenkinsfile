@@ -5,10 +5,11 @@ pipeline {
         DOCKER_REGISTRY = "docker.io"
         DOCKER_IMAGE = "nandraina/challenge-springboot"
         DOCKER_TAG = "latest"
+        PRIVATE_KEY_PATH = credentials('jenkins-private-key-file')
+        PUBLIC_KEY_PATH  = credentials('jenkins-public-key-file')
         TESTCONTAINERS_RYUK_DISABLED=true
         TESTCONTAINERS_HOST_OVERRIDE = "host.docker.internal"
     }
-
     stages {
         stage('Clean Workspace') {
             agent { label 'local-machine-agent' }
@@ -27,7 +28,9 @@ pipeline {
         stage('Build + Tests') {
             agent { label 'local-machine-agent' }
             steps {
-                withCredentials([string(credentialsId: 'nvd-api-key', variable: 'NVD_API_KEY')]) {
+                withCredentials([
+                    string(credentialsId: 'nvd-api-key', variable: 'NVD_API_KEY')
+                ]) {
                     withEnv(["MAVEN_OPTS=-DnvdApiKey=$NVD_API_KEY"]) {
                         sh """
                         mvn clean verify \
