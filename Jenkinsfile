@@ -1,5 +1,5 @@
 pipeline {
-    agent any
+    agent { label 'local-machine-agent' }
 
     environment {
         DOCKER_REGISTRY = "docker.io"
@@ -13,7 +13,6 @@ pipeline {
     stages {
 
         stage('Checkout') {
-            agent { label 'local-machine-agent' }
             steps {
                 git branch: 'develop',
                     url: 'https://github.com/jerryalex15/challengeFullstackDevOps.git',
@@ -22,7 +21,6 @@ pipeline {
         }
 
         stage('Build + Tests') {
-            agent { label 'local-machine-agent' }
             steps {
                 withCredentials([
                     string(credentialsId: 'nvd-api-key', variable: 'NVD_API_KEY')
@@ -38,7 +36,6 @@ pipeline {
         }
 
         stage('Sonar Analysis') {
-            agent { label 'local-machine-agent' }
             steps {
                 withSonarQubeEnv('SonarCloud') {
                     withCredentials([string(credentialsId: 'jenkins-sonar-angular-token', variable: 'SONAR_AUTH_TOKEN')]) {
@@ -57,7 +54,6 @@ pipeline {
         }
 
         stage("Quality Gate") {
-            agent { label 'local-machine-agent' }
             steps {
                 timeout(time: 10, unit: 'MINUTES') {
                     retry(2) { waitForQualityGate abortPipeline: true }
@@ -65,7 +61,6 @@ pipeline {
             }
         }
         stage('Build Docker Image') {
-            agent { label 'local-machine-agent' }
             steps {
                 withCredentials([
                     usernamePassword(
@@ -85,7 +80,6 @@ pipeline {
             }
         }
         stage('Deploy to Oracle VM') {
-            agent { label 'local-machine-agent' }
             steps {
                 withCredentials([
                     string(credentialsId: 'oracle-vm-ip', variable: 'VM_IP'),
