@@ -5,8 +5,6 @@ pipeline {
         DOCKER_REGISTRY = "docker.io"
         DOCKER_IMAGE = "nandraina/challenge-springboot"
         DOCKER_TAG = "latest"
-        PRIVATE_KEY_PATH = credentials('jenkins-private-key-file')
-        PUBLIC_KEY_PATH  = credentials('jenkins-public-key-file')
     }
     stages {
 
@@ -21,6 +19,8 @@ pipeline {
         stage('Build + Tests') {
             steps {
                 withCredentials([
+                    file(credentialsId: 'jenkins-private-key-file', variable: 'PRIVATE_KEY_PATH'),
+                    file(credentialsId: 'jenkins-public-key-file',  variable: 'PUBLIC_KEY_PATH'),
                     string(credentialsId: 'nvd-api-key', variable: 'NVD_API_KEY')
                 ]) {
                     withEnv(["MAVEN_OPTS=-DnvdApiKey=$NVD_API_KEY"]) {
