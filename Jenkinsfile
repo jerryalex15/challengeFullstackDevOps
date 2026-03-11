@@ -122,4 +122,12 @@ pipeline {
             }
         }
     }
+
+    post {
+        always {
+            node('local-machine-agent') {
+                cleanWs()
+            }
+        }
+    }
 }
