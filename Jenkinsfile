@@ -24,10 +24,17 @@ pipeline {
                     string(credentialsId: 'nvd-api-key', variable: 'NVD_API_KEY')
                 ]) {
                     withEnv(["MAVEN_OPTS=-DnvdApiKey=$NVD_API_KEY"]) {
+                    sh """
+                        echo "Private key path: \$PRIVATE_KEY_PATH"
+                        ls -la \$PRIVATE_KEY_PATH
+                        cat \$PRIVATE_KEY_PATH | head -3
+                    """
                         sh """
-                        mvn clean verify \
-                          -Ddependency-check.forceUpdate=true
-                        """
+                           mvn clean verify \
+                             -Ddependency-check.forceUpdate=true \
+                             -Djwt.private-key-path=\$PRIVATE_KEY_PATH \
+                             -Djwt.public-key-path=\$PUBLIC_KEY_PATH
+                       """
                     }
                 }
             }
