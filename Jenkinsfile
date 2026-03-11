@@ -1,10 +1,12 @@
 pipeline {
-    agent none
+    agent any
 
     environment {
         DOCKER_REGISTRY = "docker.io"
         DOCKER_IMAGE = "nandraina/challenge-springboot"
         DOCKER_TAG = "latest"
+        PRIVATE_KEY_PATH = credentials('jenkins-private-key-file')
+        PUBLIC_KEY_PATH  = credentials('jenkins-public-key-file')
         TESTCONTAINERS_RYUK_DISABLED=true
         TESTCONTAINERS_HOST_OVERRIDE = "host.docker.internal"
     }
@@ -25,10 +27,6 @@ pipeline {
 
         stage('Build + Tests') {
             agent { label 'local-machine-agent' }
-            environment {
-                PRIVATE_KEY_PATH = credentials('jenkins-private-key-file')
-                PUBLIC_KEY_PATH  = credentials('jenkins-public-key-file')
-            }
             steps {
                 withCredentials([
                     string(credentialsId: 'nvd-api-key', variable: 'NVD_API_KEY')

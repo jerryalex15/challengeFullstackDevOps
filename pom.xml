@@ -145,6 +145,13 @@
 				<executions>
 					<execution>
 						<goals><goal>prepare-agent</goal></goals>
+						<configuration>
+							<excludes>
+								<exclude>javax/**</exclude>
+								<exclude>java/**</exclude>
+								<exclude>sun/**</exclude>
+							</excludes>
+						</configuration>
 					</execution>
 					<execution>
 						<id>report</id>
