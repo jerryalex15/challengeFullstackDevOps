@@ -3,9 +3,14 @@ pipeline {
 
     environment {
         DOCKER_REGISTRY = "docker.io"
-        DOCKER_IMAGE = "nandraina/challenge-springboot"
-        DOCKER_TAG = "latest"
+        DOCKER_IMAGE    = "nandraina/challenge-springboot"
+        DOCKER_TAG      = "latest"
+        DEPLOY_DIR      = "/home/opc/challengeFullstackDevOps"
+        SECRETS_DIR     = "/home/opc/challengeFullstackDevOps/secrets"
+        REMOTE_USER     = "opc"
+        SSH_OPTS        = "-o StrictHostKeyChecking=no"
     }
+
     stages {
 
         stage('Checkout') {
@@ -89,24 +94,33 @@ pipeline {
                 ]) {
                     sshagent(credentials: ['oracle-vm-ssh']) {
                         sh """
+                            # ── 1. Copie atomique des clés (.new d'abord) ──────────────────
+                            scp \$SSH_OPTS \$PRIVATE_KEY_FILE \
+                                \$REMOTE_USER@\$VM_IP:\$SECRETS_DIR/private_key.pem.new
 
-                            ssh -o StrictHostKeyChecking=no opc@\$VM_IP 'sudo rm -f /home/opc/challengeFullstackDevOps/secrets/*.pem'
-                            ssh -o StrictHostKeyChecking=no opc@\$VM_IP 'chmod 755 /home/opc/challengeFullstackDevOps/secrets'
+                            scp \$SSH_OPTS \$PUBLIC_KEY_FILE \
+                                \$REMOTE_USER@\$VM_IP:\$SECRETS_DIR/public_key.pem.new
 
-                            scp -o StrictHostKeyChecking=no \$PRIVATE_KEY_FILE \
-                                opc@\$VM_IP:/home/opc/challengeFullstackDevOps/secrets/private_key.pem
-                            scp -o StrictHostKeyChecking=no \$PUBLIC_KEY_FILE \
-                                opc@\$VM_IP:/home/opc/challengeFullstackDevOps/secrets/public_key.pem
+                            # ── 2. Remplacement + permissions ─────────────────────────────
+                            ssh \$SSH_OPTS \$REMOTE_USER@\$VM_IP '
+                                cd \$SECRETS_DIR
+                                mv private_key.pem.new private_key.pem
+                                mv public_key.pem.new public_key.pem
+                                chmod 644 \$SECRETS_DIR/*.pem
+                            '
 
-                            ssh -o StrictHostKeyChecking=no opc@\$VM_IP 'chmod 644 /home/opc/challengeFullstackDevOps/secrets/*.pem'
+                            # ── 3. Envoi du docker-compose ────────────────────────────────
+                            scp \$SSH_OPTS docker-compose.yml \
+                                \$REMOTE_USER@\$VM_IP:\$DEPLOY_DIR/docker-compose.yml
 
-                            scp -o StrictHostKeyChecking=no docker-compose.yml \
-                                opc@\$VM_IP:/home/opc/challengeFullstackDevOps/docker-compose.yml
-                            ssh -o StrictHostKeyChecking=no opc@\$VM_IP '
-                                cd /home/opc/challengeFullstackDevOps
-                                docker pull nandraina/challenge-springboot:latest
-                                docker compose down || true
+                            # ── 4. Pull + restart + health check ──────────────────────────
+                            ssh \$SSH_OPTS \$REMOTE_USER@\$VM_IP '
+                                cd \$DEPLOY_DIR
+                                docker pull \$DOCKER_IMAGE:\$DOCKER_TAG
+                                docker compose down
                                 docker compose up -d
+                                sleep 10
+                                docker compose ps | grep -q "Up" || exit 1
                             '
                         """
                     }
@@ -117,9 +131,7 @@ pipeline {
 
     post {
         always {
-            node('local-machine-agent') {
-                sh 'rm -f secrets/*.pem || true'
-            }
+            sh 'rm -f secrets/*.pem || true'
         }
     }
 }
