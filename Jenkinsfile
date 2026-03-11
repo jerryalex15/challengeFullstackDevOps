@@ -25,12 +25,6 @@ pipeline {
                 ]) {
                     withEnv(["MAVEN_OPTS=-DnvdApiKey=$NVD_API_KEY"]) {
                     sh """
-                        echo "=== Contenu du fichier Jenkins ==="
-                        head -1 \$PRIVATE_KEY_PATH
-                        echo "=== Taille ==="
-                        wc -l \$PRIVATE_KEY_PATH
-                    """
-                    sh """
                         export PRIVATE_KEY_PATH=\$PRIVATE_KEY_PATH
                         export PUBLIC_KEY_PATH=\$PUBLIC_KEY_PATH
                         mvn clean verify \
