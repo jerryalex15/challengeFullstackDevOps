@@ -1,5 +1,5 @@
 pipeline {
-    agent any
+    agent none
 
     environment {
         DOCKER_REGISTRY = "docker.io"
@@ -8,25 +8,27 @@ pipeline {
         PRIVATE_KEY_PATH = credentials('jenkins-private-key-file')
         PUBLIC_KEY_PATH  = credentials('jenkins-public-key-file')
         TESTCONTAINERS_RYUK_DISABLED=true
-        // IMPORTANT pour macOS + Testcontainers
         TESTCONTAINERS_HOST_OVERRIDE = "host.docker.internal"
     }
     stages {
         stage('Clean Workspace') {
+            agent { label 'local-machine-agent' }
             steps { cleanWs() }
         }
 
         stage('Checkout') {
+            agent { label 'local-machine-agent' }
             steps {
                 git branch: 'develop',
                     url: 'https://github.com/jerryalex15/challengeFullstackDevOps.git',
-                    credentialsId: 'github-token-id'
+                    credentialsId: 'github-credential-ci'
             }
         }
 
         stage('Build + Tests') {
+            agent { label 'local-machine-agent' }
             steps {
-                withCredentials([string(credentialsId: 'nvd-api-key-id', variable: 'NVD_API_KEY')]) {
+                withCredentials([string(credentialsId: 'nvd-api-key', variable: 'NVD_API_KEY')]) {
                     withEnv(["MAVEN_OPTS=-DnvdApiKey=$NVD_API_KEY"]) {
                         sh """
                         mvn clean verify \
@@ -38,9 +40,10 @@ pipeline {
         }
 
         stage('Sonar Analysis') {
+            agent { label 'local-machine-agent' }
             steps {
                 withSonarQubeEnv('SonarCloud') {
-                    withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_AUTH_TOKEN')]) {
+                    withCredentials([string(credentialsId: 'jenkins-sonar-angular-token', variable: 'SONAR_AUTH_TOKEN')]) {
                         sh '''
                         mvn sonar:sonar \
                           -Dsonar.projectKey=jerryalex15_challengeFullstackDevOps \
@@ -56,6 +59,7 @@ pipeline {
         }
 
         stage("Quality Gate") {
+            agent { label 'local-machine-agent' }
             steps {
                 timeout(time: 10, unit: 'MINUTES') {
                     retry(2) { waitForQualityGate abortPipeline: true }
@@ -63,10 +67,11 @@ pipeline {
             }
         }
         stage('Build Docker Image') {
+            agent { label 'local-machine-agent' }
             steps {
                 withCredentials([
                     usernamePassword(
-                        credentialsId: 'docker-hub-cred',
+                        credentialsId: 'Jenkins-ci-docker-hub-credential',
                         usernameVariable: 'DOCKER_USER',
                         passwordVariable: 'DOCKER_PASS'
                     )
@@ -82,32 +87,29 @@ pipeline {
             }
         }
         stage('Deploy to Oracle VM') {
+            agent { label 'local-machine-agent' }
             steps {
                 withCredentials([
-                    string(credentialsId: 'Oracle-vm-ip', variable: 'VM_IP'),
+                    string(credentialsId: 'oracle-vm-ip', variable: 'VM_IP'),
                     file(credentialsId: 'jenkins-private-key-file', variable: 'PRIVATE_KEY_FILE'),
                     file(credentialsId: 'jenkins-public-key-file', variable: 'PUBLIC_KEY_FILE')
                 ]) {
                     sshagent(credentials: ['oracle-vm-ssh']) {
                         sh """
-                            # Prépare le dossier
+
                             ssh -o StrictHostKeyChecking=no opc@\$VM_IP 'sudo rm -f /home/opc/challengeFullstackDevOps/secrets/*.pem'
                             ssh -o StrictHostKeyChecking=no opc@\$VM_IP 'chmod 755 /home/opc/challengeFullstackDevOps/secrets'
 
-                            # Copie les clés
                             scp -o StrictHostKeyChecking=no \$PRIVATE_KEY_FILE \
                                 opc@\$VM_IP:/home/opc/challengeFullstackDevOps/secrets/private_key.pem
                             scp -o StrictHostKeyChecking=no \$PUBLIC_KEY_FILE \
                                 opc@\$VM_IP:/home/opc/challengeFullstackDevOps/secrets/public_key.pem
 
-                            # Sécurise les fichiers, dossier lisible par Docker
                             ssh -o StrictHostKeyChecking=no opc@\$VM_IP 'chmod 644 /home/opc/challengeFullstackDevOps/secrets/*.pem'
 
-                            # Copie docker-compose
                             scp -o StrictHostKeyChecking=no docker-compose.yml \
                                 opc@\$VM_IP:/home/opc/challengeFullstackDevOps/docker-compose.yml
-
-                            # Lance
+ d
                             ssh -o StrictHostKeyChecking=no opc@\$VM_IP '
                                 cd /home/opc/challengeFullstackDevOps
                                 docker pull nandraina/challenge-springboot:latest
