@@ -1,13 +1,11 @@
 package com.challenger.jerry.dto;
 
-import com.challenger.jerry.entity.Role;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.Builder;
 
 import java.util.List;
-import java.util.Set;
 
 @Getter
 @Setter
