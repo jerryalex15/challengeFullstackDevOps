@@ -32,6 +32,8 @@ public class SecurityConfig {
 
     @Value("${app.url}")
     private String appUrl;
+    @Value("${app.ip}")
+    private String appIp;
 
     private final JwtAuthFilter jwtAuthFilter;
     private final CustomUserDetailsService customUserDetailsService;
@@ -111,7 +113,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
 
-        config.setAllowedOriginPatterns(List.of(this.appUrl));
+        config.setAllowedOriginPatterns(List.of(this.appUrl, this.appIp));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         config.setAllowedHeaders(List.of("*"));
         config.setExposedHeaders(List.of("Authorization"));
