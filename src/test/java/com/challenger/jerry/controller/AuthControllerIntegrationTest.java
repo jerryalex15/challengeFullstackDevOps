@@ -25,6 +25,7 @@ import java.time.LocalDateTime;
 import java.util.Set;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -181,5 +182,11 @@ class AuthControllerIntegrationTest extends DatabaseInstanceTest {
         mockMvc.perform(post("/api/auth/logout")
                         .header("Authorization", "Bearer " + accessToken))
                 .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void shouldReturn401_whenAccessingProtectedEndpointWithoutToken() throws Exception {
+        mockMvc.perform(get("/api/user/profile"))
+                .andExpect(status().isUnauthorized());
     }
 }
