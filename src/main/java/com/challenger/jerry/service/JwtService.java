@@ -5,8 +5,6 @@ import com.challenger.jerry.entity.UserInfo;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
-import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
@@ -95,10 +93,10 @@ public class JwtService {
     public String generateToken(String email) {
         try {
             return Jwts.builder()
-                    .setSubject(email)
-                    .setIssuedAt(new Date())
-                    .setExpiration(new Date(System.currentTimeMillis() + jwtExpiration))
-                    .signWith(getPrivateKey(), SignatureAlgorithm.RS256)
+                    .subject(email)
+                    .issuedAt(new Date())
+                    .expiration(new Date(System.currentTimeMillis() + jwtExpiration))
+                    .signWith(getPrivateKey())
                     .compact();
         } catch (JwtException | IllegalArgumentException |
                  IOException | NoSuchAlgorithmException |
@@ -109,11 +107,11 @@ public class JwtService {
 
     public Claims extractAllClaims(String token) {
         try {
-            return Jwts.parserBuilder()
-                    .setSigningKey(getPublicKey())
+            return Jwts.parser()
+                    .verifyWith(getPublicKey())
                     .build()
-                    .parseClaimsJws(token)
-                    .getBody();
+                    .parseSignedClaims(token)
+                    .getPayload();
         } catch (Exception e) {
             throw new JwtException("Invalid JWT token", e);
         }
@@ -137,7 +135,7 @@ public class JwtService {
     }
 
     public Boolean validateToken(String token, UserDetails userDetails) {
-        final String username = extractUsername(token);
+      final String username = extractUsername(token);
         return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
     }
 
