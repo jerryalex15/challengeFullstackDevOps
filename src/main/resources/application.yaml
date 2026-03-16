@@ -38,5 +38,5 @@ logging:
     org.springframework.security: ${SECURITY_LOG_LEVEL:INFO}
 
 app:
-  url: ${APP_URL:http://localhost}
-  ip: ${APP_IP:http://127.0.0.1}
+  url: ${APP_URL:http://localhost:4200}
+  ip: ${APP_IP:http://127.0.0.1:4200}
