@@ -1,37 +1,41 @@
 pipeline {
-    agent any
+    agent { label 'local-machine-agent' }
 
     environment {
         DOCKER_REGISTRY = "docker.io"
-        DOCKER_IMAGE = "nandraina/challenge-springboot"
-        DOCKER_TAG = "latest"
-        PRIVATE_KEY_PATH = credentials('jenkins-private-key-file')
-        PUBLIC_KEY_PATH  = credentials('jenkins-public-key-file')
-        TESTCONTAINERS_RYUK_DISABLED=true
-        // IMPORTANT pour macOS + Testcontainers
-        TESTCONTAINERS_HOST_OVERRIDE = "host.docker.internal"
+        DOCKER_IMAGE    = "nandraina/challenge-springboot"
+        DOCKER_TAG      = "latest"
+        DEPLOY_DIR      = "/home/opc/challengeFullstackDevOps"
+        SECRETS_DIR     = "/home/opc/challengeFullstackDevOps/secrets"
+        REMOTE_USER     = "opc"
+        SSH_OPTS        = "-o StrictHostKeyChecking=no"
     }
+
     stages {
-        stage('Clean Workspace') {
-            steps { cleanWs() }
-        }
 
         stage('Checkout') {
             steps {
                 git branch: 'develop',
                     url: 'https://github.com/jerryalex15/challengeFullstackDevOps.git',
-                    credentialsId: 'github-token-id'
+                    credentialsId: 'github-credential-ci'
             }
         }
 
         stage('Build + Tests') {
             steps {
-                withCredentials([string(credentialsId: 'nvd-api-key-id', variable: 'NVD_API_KEY')]) {
+                withCredentials([
+                    file(credentialsId: 'jenkins-private-key-file', variable: 'PRIVATE_KEY_PATH'),
+                    file(credentialsId: 'jenkins-public-key-file',  variable: 'PUBLIC_KEY_PATH'),
+                    string(credentialsId: 'nvd-api-key', variable: 'NVD_API_KEY')
+                ]) {
                     withEnv(["MAVEN_OPTS=-DnvdApiKey=$NVD_API_KEY"]) {
-                        sh """
+                    sh """
+                        export PRIVATE_KEY_PATH=\$PRIVATE_KEY_PATH
+                        export PUBLIC_KEY_PATH=\$PUBLIC_KEY_PATH
                         mvn clean verify \
-                          -Ddependency-check.forceUpdate=true
-                        """
+                          -Ddependency-check.forceUpdate=true \
+                          -DnvdApiKey=\$NVD_API_KEY
+                    """
                     }
                 }
             }
@@ -40,7 +44,7 @@ pipeline {
         stage('Sonar Analysis') {
             steps {
                 withSonarQubeEnv('SonarCloud') {
-                    withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_AUTH_TOKEN')]) {
+                    withCredentials([string(credentialsId: 'jenkins-sonar-angular-token', variable: 'SONAR_AUTH_TOKEN')]) {
                         sh '''
                         mvn sonar:sonar \
                           -Dsonar.projectKey=jerryalex15_challengeFullstackDevOps \
@@ -66,7 +70,7 @@ pipeline {
             steps {
                 withCredentials([
                     usernamePassword(
-                        credentialsId: 'docker-hub-cred',
+                        credentialsId: 'Jenkins-ci-docker-hub-credential',
                         usernameVariable: 'DOCKER_USER',
                         passwordVariable: 'DOCKER_PASS'
                     )
@@ -84,40 +88,51 @@ pipeline {
         stage('Deploy to Oracle VM') {
             steps {
                 withCredentials([
-                    string(credentialsId: 'Oracle-vm-ip', variable: 'VM_IP'),
+                    string(credentialsId: 'oracle-vm-ip', variable: 'VM_IP'),
+                    sshUserPrivateKey(credentialsId: 'oracle-vm-ssh', keyFileVariable: 'SSH_KEY_FILE'),
                     file(credentialsId: 'jenkins-private-key-file', variable: 'PRIVATE_KEY_FILE'),
                     file(credentialsId: 'jenkins-public-key-file', variable: 'PUBLIC_KEY_FILE')
                 ]) {
-                    sshagent(credentials: ['oracle-vm-ssh']) {
-                        sh """
-                            # Prépare le dossier
-                            ssh -o StrictHostKeyChecking=no opc@\$VM_IP 'sudo rm -f /home/opc/challengeFullstackDevOps/secrets/*.pem'
-                            ssh -o StrictHostKeyChecking=no opc@\$VM_IP 'chmod 755 /home/opc/challengeFullstackDevOps/secrets'
+                    sh """
+                        chmod 600 \$SSH_KEY_FILE
+                        SSH_OPTS="-i \$SSH_KEY_FILE -o StrictHostKeyChecking=no"
 
-                            # Copie les clés
-                            scp -o StrictHostKeyChecking=no \$PRIVATE_KEY_FILE \
-                                opc@\$VM_IP:/home/opc/challengeFullstackDevOps/secrets/private_key.pem
-                            scp -o StrictHostKeyChecking=no \$PUBLIC_KEY_FILE \
-                                opc@\$VM_IP:/home/opc/challengeFullstackDevOps/secrets/public_key.pem
+                        # ── 1. Copie atomique des clés JWT
+                        scp \$SSH_OPTS \$PRIVATE_KEY_FILE \\
+                            \$REMOTE_USER@\$VM_IP:\$SECRETS_DIR/private_key.pem.new
 
-                            # Sécurise les fichiers, dossier lisible par Docker
-                            ssh -o StrictHostKeyChecking=no opc@\$VM_IP 'chmod 644 /home/opc/challengeFullstackDevOps/secrets/*.pem'
+                        scp \$SSH_OPTS \$PUBLIC_KEY_FILE \\
+                            \$REMOTE_USER@\$VM_IP:\$SECRETS_DIR/public_key.pem.new
 
-                            # Copie docker-compose
-                            scp -o StrictHostKeyChecking=no docker-compose.yml \
-                                opc@\$VM_IP:/home/opc/challengeFullstackDevOps/docker-compose.yml
+                        # ── 2. Remplacement + permissions
+                        ssh \$SSH_OPTS \$REMOTE_USER@\$VM_IP "
+                            mv \$SECRETS_DIR/private_key.pem.new \$SECRETS_DIR/private_key.pem
+                            mv \$SECRETS_DIR/public_key.pem.new \$SECRETS_DIR/public_key.pem
+                            chmod 644 \$SECRETS_DIR/*.pem
+                        "
 
-                            # Lance
-                            ssh -o StrictHostKeyChecking=no opc@\$VM_IP '
-                                cd /home/opc/challengeFullstackDevOps
-                                docker pull nandraina/challenge-springboot:latest
-                                docker compose down || true
-                                docker compose up -d
-                            '
-                        """
-                    }
+                        # ── 3. Envoi du docker-compose
+                        scp \$SSH_OPTS docker-compose.yml \\
+                            \$REMOTE_USER@\$VM_IP:\$DEPLOY_DIR/docker-compose.yml
+
+                        # ── 4. Pull + restart + health check
+                        ssh \$SSH_OPTS \$REMOTE_USER@\$VM_IP "
+                            cd \$DEPLOY_DIR
+                            docker pull \$DOCKER_IMAGE:\$DOCKER_TAG
+                            docker compose down
+                            docker compose up -d
+                            sleep 10
+                            docker compose ps | grep -q 'Up' || exit 1
+                        "
+                    """
                 }
             }
+        }
+    }
+
+    post {
+        always {
+            sh 'rm -f secrets/*.pem || true'
         }
     }
 }
